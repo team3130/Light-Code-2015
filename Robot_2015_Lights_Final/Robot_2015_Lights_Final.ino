@@ -242,6 +242,117 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
+ void dispatchInputs(char serialInput){
+    override();
+  switch(lifterTaskState){
+    case 1:          //Foward
+          wave(forloopthingy3,  impartialForLoopKeeper3,  NUM_LEDS_LIFTER,  ledsLifter,  15,  true,  timer1,  impartialTimeKeeper3,  finished3);           
+    break;
+    
+    case 2:    //Neutral
+      chase(forloopthingy3, 32,  NUM_LEDS_LIFTER,  ledsLifter,  15,  CRGB::Yellow,  CRGB::Blue, true, timer3,  impartialTimeKeeper3,  finished3,chaseround3);
+    break;
+    
+    case 3:    //Back
+     multicolordown(forloopthingy3,  impartialForLoopKeeper3, NUM_LEDS_LIFTER,  ledsLifter,  15,  true,  timer3,  impartialTimeKeeper3,  finished3);
+    break;
+    
+    case 4:
+    blind();
+        resetTimers();
+
+    //updateLifterTask();
+    break;
+    
+    case 5:
+    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Red);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+   resetTimers();
+  //updateLifterTask();
+    break;
+    
+    case 6:
+    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Blue);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+    resetTimers();
+  //updateLifterTask();
+    break;
+    
+    case 7:
+    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Yellow);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+  resetTimers();
+  //updateLifterTask();
+  break;
+    default:
+    updateLifterTask();
+     
+     
+    break;
+    
+    
+  }
+  
+  //override();
+  switch(intakeTaskState){
+    case 1:                //Forward
+         wave(forloopthingy1,  impartialForLoopKeeper1,  NUM_LEDS,  leds,  15,  true,  timer1,  impartialTimeKeeper1,  finished1);           
+    break;
+    
+    case 2:    //Neutral
+        chase(forloopthingy1, 32,  NUM_LEDS,  leds,  15,  CRGB::Yellow,  CRGB::Blue, true, timer1,  impartialTimeKeeper1,  finished1, chaseround1);
+    break;
+    
+    case 3:      //Back
+         multicolordown(forloopthingy1,  impartialForLoopKeeper1, NUM_LEDS,  leds,  15,  true,  timer1,  impartialTimeKeeper1,  finished1);
+
+    break;
+    
+    case 4:
+    blind();
+        resetTimers();
+
+    //updatePusherTask();
+   break;
+   
+   case 5:
+   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Red);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+  resetTimers();
+  //updatePusherTask();
+   break;
+   
+   case 6:
+   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Blue);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+   resetTimers();
+  //updatePusherTask();
+   break;
+   
+   case 7:
+   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Yellow);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+   resetTimers();
+  //updatePusherTask();
+   break;
+    
+    default:
+  
+   
+                   updatePusherTask();
+                   break;
+
+     }
+ }
+  //\/\/\/\/\/\/\/\/\/
+ //\/\/\/\/\/\/\/\/\/
+ //\/\/\/\/\/\/\/\/\/
+ //\/\/\/\/\/\/\/\/\/
+ //\/\/\/\/\/\/\/\/\/
+ //\/\/\/\/\/\/\/\/\/
+ //\/\/\/\/\/\/\/\/\/
+ //\/\/\/\/\/\/\/\/\/
+ //\/\/\/\/\/\/\/\/\/
  void blind(){
    for(forloopthingy1 = 0; forloopthingy1 < 7; forloopthingy1++){
    for(timer = 0; timer < NUM_LEDS; timer++){
@@ -844,144 +955,7 @@ pinMode(DATA_PIN_LIFTER,OUTPUT);
 void loop(){
   
   serialValue = Serial.read();
-  
-  
-  
-  override();
-  switch(lifterTaskState){
-    case 1:          //Foward
-          wave(forloopthingy3,  impartialForLoopKeeper3,  NUM_LEDS_LIFTER,  ledsLifter,  15,  true,  timer1,  impartialTimeKeeper3,  finished3);           
-    break;
-    
-    case 2:    //Neutral
-      chase(forloopthingy3, 32,  NUM_LEDS_LIFTER,  ledsLifter,  15,  CRGB::Yellow,  CRGB::Blue, true, timer3,  impartialTimeKeeper3,  finished3,chaseround3);
-    break;
-    
-    case 3:    //Back
-     multicolordown(forloopthingy3,  impartialForLoopKeeper3, NUM_LEDS_LIFTER,  ledsLifter,  15,  true,  timer3,  impartialTimeKeeper3,  finished3);
-    break;
-    
-    case 4:
-    blind();
-        resetTimers();
-
-    //updateLifterTask();
-    break;
-    
-    case 5:
-    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Red);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
-   resetTimers();
-  //updateLifterTask();
-    break;
-    
-    case 6:
-    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Blue);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
-    resetTimers();
-  //updateLifterTask();
-    break;
-    
-    case 7:
-    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Yellow);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
-  resetTimers();
-  //updateLifterTask();
-  break;
-    default:
-    updateLifterTask();
-     
-     
-    break;
-    
-    
-  }
-  
-  //override();
-  switch(intakeTaskState){
-    case 1:                //Forward
-         wave(forloopthingy1,  impartialForLoopKeeper1,  NUM_LEDS,  leds,  15,  true,  timer1,  impartialTimeKeeper1,  finished1);           
-    break;
-    
-    case 2:    //Neutral
-        chase(forloopthingy1, 32,  NUM_LEDS,  leds,  15,  CRGB::Yellow,  CRGB::Blue, true, timer1,  impartialTimeKeeper1,  finished1, chaseround1);
-    break;
-    
-    case 3:      //Back
-         multicolordown(forloopthingy1,  impartialForLoopKeeper1, NUM_LEDS,  leds,  15,  true,  timer1,  impartialTimeKeeper1,  finished1);
-
-    break;
-    
-    case 4:
-    blind();
-        resetTimers();
-
-    //updatePusherTask();
-   break;
-   
-   case 5:
-   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Red);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
-  resetTimers();
-  //updatePusherTask();
-   break;
-   
-   case 6:
-   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Blue);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
-   resetTimers();
-  //updatePusherTask();
-   break;
-   
-   case 7:
-   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Yellow);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
-   resetTimers();
-  //updatePusherTask();
-   break;
-    
-    default:
-    /*for(testvariable1 =0; testvariable1 < NUM_LEDS; testvariable1++){
-    switch(testvariable2){
-     case 1:
-     leds[testvariable1] = CRGB::Red;
-     break;
-    
-    case 2:
-    leds[testvariable1] = CRGB::Blue;
-    break;
-   
-   case 3:
-   leds[testvariable1] = CRGB::Green;
-   break;
-  
-  case 4:
-  leds[testvariable1] = CRGB::Purple;
-  break;
- 
- case 5: 
- leds[testvariable1] = CRGB::White;
- break;
- 
- default:
-if(testvariable2%2 == 0){ 
- leds[testvariable1] = CRGB::Yellow;
-}else{
- leds[testvariable1] = CRGB::Blue; 
-}
- break;
-    }
-    }
-    delay(250);
-    testvariable2++;
-    */
-   
-                   updatePusherTask();
-                   break;
-
-     }
-    
-  
+  dispatchInputs(serialValue);
   FastLED.show();
   if(intakeTaskState > 0 or lifterTaskState > 0){
     delay(DELAY);
