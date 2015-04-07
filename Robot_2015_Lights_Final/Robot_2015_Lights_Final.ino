@@ -32,6 +32,8 @@
 
 CRGB leds[NUM_LEDS];
 CRGB ledsLifter[NUM_LEDS_LIFTER];
+  int forloopthingy = 0;
+  int dynamicDelay = 0;
   int testvariable1 = 0;
   int testvariable2 = 0;
   int forloopthingy1 = 0;
@@ -92,6 +94,73 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
+ void startUpLights(){
+    dynamicDelay = 10000;
+    for(timer = NUM_LEDS -1; timer >  -1; timer--){
+   
+     leds[timer] = CRGB::Red;      //Actually green. WS2811's are odd.
+     FastLED.show();
+      if(dynamicDelay > 20){
+      dynamicDelay = dynamicDelay/2;
+      }
+      if(dynamicDelay < 10){
+       dynamicDelay = 20; 
+      }
+      delay(dynamicDelay);
+     
+         
+   
+ }
+ 
+ for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
+   
+     ledsLifter[timer] = CRGB::Green;
+     FastLED.show();
+      delay(dynamicDelay);    
+   
+ }
+ for(forloopthingy = 0; forloopthingy < 10; forloopthingy++){
+ for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
+   
+     ledsLifter[timer] = CRGB::White;
+   
+ }
+ 
+  for(timer = 0; timer < NUM_LEDS; timer++){
+   
+     leds[timer] = CRGB::White;
+   
+ }
+ FastLED.show();
+ delay(100);
+ 
+ for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
+   
+     ledsLifter[timer] = CRGB::Green;
+   
+ }
+ 
+  for(timer = 0; timer < NUM_LEDS; timer++){
+   
+     leds[timer] = CRGB::Red;
+   
+ }
+ FastLED.show();
+ delay(100);
+ } 
+ for(timer = 0; timer < NUM_LEDS; timer++){
+   
+     leds[timer] = CRGB::Black;
+   
+ }
+ 
+ for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
+   
+     ledsLifter[timer] = CRGB::Black;
+   
+ }
+ FastLED.show();
+ }
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
@@ -898,47 +967,7 @@ pinMode(DATA_PIN_LIFTER,OUTPUT);
  Serial.begin(9600);
  //Serial.setTimeout(500);
 
- for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
-   
-   ledsLifter[timer] = CRGB::Green;                      //Turns all of the LEDs off
-   delay(DELAY);
-   FastLED.show();
- }
- 
-  for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
-   
-   ledsLifter[timer] = CRGB::Red;                      //Turns all of the LEDs off
-   delay(DELAY);
-   FastLED.show();
- }
- 
-  for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
-   
-   ledsLifter[timer] = CRGB::Purple;                      //Turns all of the LEDs off
-   delay(DELAY);
-   FastLED.show();
- }
- 
-  for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
-   
-   ledsLifter[timer] = CRGB::Black;                      //Turns all of the LEDs off
-   delay(DELAY);
-   FastLED.show();
- }
- 
-  for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
-   
-   ledsLifter[timer] = CRGB::Green;                      //Turns all of the LEDs off
-   delay(DELAY);
-   FastLED.show();
- }
- 
- for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
-   ledsLifter[timer] = CRGB::Black;                      //Turns all of the LEDs off
-   delay(DELAY);
-   FastLED.show();
- }
- //test();
+startUpLights(); 
 
 }
 
@@ -957,7 +986,7 @@ void loop(){
   serialValue = Serial.read();
   dispatchInputs(serialValue);
   FastLED.show();
-  if(intakeTaskState > 0 or lifterTaskState > 0){
+  if(intakeTaskState > 0 or lifterTaskState > 0){    //Only delay if we have lights to show. No reason to delay if there is nothing there.
     delay(DELAY);
 }
 
