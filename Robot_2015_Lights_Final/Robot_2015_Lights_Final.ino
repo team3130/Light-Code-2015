@@ -30,8 +30,10 @@
 //#define DATA_PIN_INPUT2 4
 #define DELAY 20 //sets the delay between light updates to 15 milliseconds
 
-CRGB leds[NUM_LEDS];
+
+  CRGB leds[NUM_LEDS];
 CRGB ledsLifter[NUM_LEDS_LIFTER];
+  
   int forloopthingy = 0;
   int dynamicDelay = 0;
   int testvariable1 = 0;
@@ -42,8 +44,8 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
   bool chaseround1 = 0;
   bool chaseround2 = 0;
   bool chaseround3 = 0;
-  int timer = 0;
-  int timer1 = 0;
+  int timer = 0;                        //Tons of outdated variables.
+  int timer1 = 0;                       //To be deleted.
   int timer2 = 0;
   int timer3 = 0;
   int impartialTimeKeeper1 = 0;
@@ -52,21 +54,484 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
   int impartialForLoopKeeper1 = 0;
   int impartialForLoopKeeper2 = 0;
   int impartialForLoopKeeper3 = 0;
-  int lifterTaskState = 0;
-  int intakeTaskState = 0;
+  //int lifterTaskState = 0;
+  //int intakeTaskState = 0;
   char serialValue = ' ';
   bool finished1 = false;
   bool finished2 = false;
   bool finished3 = false;
+///////
+///////
+///////
+///////
+///////
+///////
+//START LIGHT DECLARATION
+///////
+///////
+///////
+///////
+///////
+///////
+
+
+
+
+
+///////
+///////
+///////
+///////
+///////
+///////
+//START LIFTER CLASS
+///////
+///////
+///////
+///////
+///////
+///////
+class Subsystem
+{
+  public:
+  Subsystem(int numberOfLeds);
+  void chase();
+  void wave();
+  void multiColorDown();
+  void resetSubsystem();
+  void resetTimers();
+  void updateTask();
+  int forloopthingy = 0;
+  int chaseround = 0;
+  int timer = 0;
+  int impartialTimeKeeper = 0;
+  int impartialForLoopKeeper = 0;
+  int taskState = 0;
+  int _updateChooser;
+  int actualNumberOfLeds;
+  bool done = false;
+  CRGB leds[];
+  
+  private:
+  
+};
+
+ Subsystem::Subsystem(int numberOfLeds){
+   
+   actualNumberOfLeds = numberOfLeds;
+   CRGB leds[numberOfLeds];
+   
+   
+  
+}
+
+void Subsystem::resetSubsystem(){
+    resetTimers();
+   taskState = 0;
+}
+
+void Subsystem::resetTimers(){
+  forloopthingy = 0;
+   chaseround = 0;
+   timer = 0;
+   impartialTimeKeeper = 0;
+   impartialForLoopKeeper = 0;
+   
+}
+
+void Subsystem::chase(){
+  if(!done){
+    if(chaseround == 0){
+     for(timer = 0; timer < actualNumberOfLeds; timer++){
+        if(timer%2 == 0){
+         leds[timer] = CRGB::Green; 
+        }else{
+         leds[timer] = CRGB::Yellow; 
+        }
+     } 
+    }else{
+      for(timer = 0; timer < actualNumberOfLeds; timer++){
+        if(timer%2 == 0){
+         leds[timer] = CRGB::Yellow; 
+        }else{
+         leds[timer] = CRGB::Green; 
+        }
+     }
+      
+    }
+    if(chaseround == 1){
+     chaseround = 0; 
+    }else{
+     chaseround = 1; 
+    }
+    impartialTimeKeeper++;
+    if(impartialTimeKeeper == 25){
+     done = true; 
+    }
+
+    }else{
+     updateTask(); 
+    }
+}
+
+void Subsystem::wave(){
+  if(!done){
+  switch(forloopthingy){
+      case 1:
+      leds[timer] = CRGB::Red;
+
+      break;
+      
+      case 2:
+      leds[timer] = CRGB::Green;
+
+      break;
+      
+      case 3:
+      leds[timer] = CRGB::Blue;
+
+      break;
+      
+      case 4:
+      leds[timer] = CRGB::Cyan;
+
+      break;
+      
+      case 5:
+      leds[timer] = CRGB::Pink;
+
+      break;
+      
+      case 6:
+      leds[timer] = CRGB::Yellow;
+
+      break;
+      
+      case 7:
+      leds[timer] = CRGB::Red;
+
+      break;
+      
+      case 8:
+      leds[timer] = CRGB::Yellow;
+
+      break;
+      
+      case 9:
+      leds[timer] = CRGB::Purple;
+
+      break;
+      
+      case 10:
+      leds[timer] = CRGB::Green;
+
+      break;
+      
+      case 11:
+      leds[timer] = CRGB::Cyan;
+
+      break;
+      
+      case 12:
+      leds[timer] = CRGB::Blue;
+
+      break;
+      
+      case 13:
+      leds[timer] = CRGB::Brown;
+
+      break;
+      
+      case 14:
+      leds[timer] = CRGB::Gold;
+
+      break;
+      
+      case 15:
+      leds[timer] = CRGB::Yellow;
+
+      break;
+      
+      case 16:
+      leds[timer] = CRGB::Red;
+
+      break;
+      
+      case 17:
+      leds[timer] = CRGB::White;
+
+      break;
+      
+      case 18:
+      leds[timer] = CRGB::Blue;
+
+      break;
+      
+      case 19:
+      leds[timer] = CRGB::Yellow;
+
+      break;
+      
+      case 20:
+      leds[timer] = CRGB::Green;
+
+      break;
+      
+      case 21:
+      leds[timer] = CRGB::Purple;
+
+      
+      break;
+      
+      case 23:
+      leds[timer] = CRGB::Green;
+
+      break;
+      
+      case 24:
+      leds[timer] = CRGB::Blue;
+
+      break;
+      
+      case 25:
+      leds[timer] = CRGB::Green;
+
+      break;
+      
+      case 26:
+      leds[timer] = CRGB::Purple;
+
+      break;
+      
+      case 27:
+      leds[timer] = CRGB::Yellow;
+
+      break;
+      
+      case 28:
+      leds[timer] = CRGB::White;
+
+      break;
+      
+      case 29:
+      leds[timer] = CRGB::Brown;
+
+      break;
+      
+      case 30:
+      leds[timer] = CRGB::Yellow;
+
+      break;
+      
+      case 31:
+      leds[timer] = CRGB::White;
+
+      break;
+      
+      case 32:
+      leds[timer] = CRGB::Purple;
+
+      break;
+      
+      
+      
+      default :
+      leds[timer] = CRGB::Purple;
+
+      
+    }
+    if(timer == forloopthingy){
+     timer = 0;
+    forloopthingy++; 
+    }else{
+     timer++; 
+    }
+ 
+ if(forloopthingy == actualNumberOfLeds){
+  done = true; 
+ }
+    
+}else{
+ updateTask(); 
+}
+}
+
+void Subsystem::multiColorDown(){
+  if(!done){
+    switch(forloopthingy){
+    case 1:
+         leds[timer] = CRGB::Red;
+         //FastLED.show();
+         break;
+        
+        case 2:
+         leds[timer] = CRGB::Blue;
+         //FastLED.show();
+        break;
+       
+       case 3:
+        leds[timer] = CRGB::Green;
+         //FastLED.show();
+       break;
+      
+      case 4:
+       leds[timer] = CRGB::Yellow;
+         //FastLED.show();
+      break;
+     
+     case 5:
+      leds[timer] = CRGB::Cyan;
+         //FastLED.show();
+     break;
+    
+    default:
+     leds[timer] = CRGB::White;
+         //FastLED.show();
+   break;
+   
+        }
+        if(timer == actualNumberOfLeds){
+         timer = 0;
+        forloopthingy++; 
+        }else{
+         timer++; 
+        }
+        if(forloopthingy == 6){
+         done = true; 
+        }
+  }
+}
+
+void Subsystem::updateTask(){
+ 
+  //serialValue = Serial.read();
+       //Calibrated to lifter.
+    switch(serialValue){
+      
+      case PUSHERNEUTRAL:
+       taskState = 2;
+resetTimers();
+       break;
+       
+       case PUSHERFORWARD:
+        taskState = 1;
+resetTimers();
+       break;
+       
+       case PUSHERBACK:
+        taskState = 3;
+resetTimers();
+       break;
+        case LIFTERUP:
+       taskState = 1;
+       resetTimers();
+       break;
+       
+       case LIFTERNEUTRAL:
+        taskState = 2;
+resetTimers();
+       break;
+       
+       case LIFTERDOWN:
+        taskState = 3;
+resetTimers();
+       break;
+       
+       case NOTZEROED:
+         taskState = 4;
+resetTimers();    
+break;
+       
+       case TEAMCOLORRED:
+       taskState = 5;
+       resetTimers();
+       break;
+       
+       case TEAMCOLORBLUE:
+       taskState = 6;
+resetTimers();      
+break;
+       
+       case TEAMCOLORUNKNOWN:
+       taskState = 7;
+resetTimers();
+break;
+       
+       default:
+       break;
+       
+      
+     }
+ 
+ 
+}
+///////
+///////
+///////
+///////
+///////
+///////
+//END LIFTER CLASS
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+
+///////
+///////
+///////
+///////
+///////
+///////
+
+
+
+Subsystem lifter(NUM_LEDS_LIFTER);
+Subsystem pusher(NUM_LEDS);
+void setup(){
+pinMode(DATA_PIN,OUTPUT);
+pinMode(DATA_PIN_LIFTER,OUTPUT);
+
+ FastLED.addLeds<WS2811, DATA_PIN>(pusher.leds, NUM_LEDS);
+ FastLED.addLeds<NEOPIXEL, DATA_PIN_LIFTER>(lifter.leds,NUM_LEDS_LIFTER);
+ Serial.begin(9600);
+ //Serial.setTimeout(500);
+
+startUpLights(); 
+}
+
+
+
   
   
- ////////////////////
- ////////////////
- /////////
- /////
- ///
- //
+ ///////
+///////
+///////
+///////
+///////
+///////
+//START GLOBAL FUNCTIONS
+///////
+///////
+///////
+///////
+///////
+///////
  void resetTimers(){
+   
+    pusher.resetSubsystem();
+    lifter.resetSubsystem();
+   
+   
+   
     forloopthingy1 = 0;
     forloopthingy2 = 0;
     forloopthingy3 = 0;
@@ -86,8 +551,8 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
    finished1 = false;
    finished2 = false;
    finished3 = false;
-   lifterTaskState = 0;
-   intakeTaskState = 0;
+   lifter.taskState = 0;
+   pusher.taskState = 0;
     
  }
  //\/\/\/\/\/\/\/\/\/
@@ -166,106 +631,9 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
- void updatePusherTask(){
-  //serialValue = Serial.read();
-    switch(serialValue){
-       case PUSHERNEUTRAL:
-       intakeTaskState = 2;
-       finished1 = false;
-       break;
-       
-       case PUSHERFORWARD:
-        intakeTaskState = 1;
-        finished1 = false;
-       break;
-       
-       case PUSHERBACK:
-        intakeTaskState = 3;
-        finished1 = false;
-       break;
-       
-       case NOTZEROED:
-         intakeTaskState = 4;
-         lifterTaskState = 4;
-         //resetTimers();
-       break;
-       
-       case TEAMCOLORRED:
-       intakeTaskState = 5;
-         lifterTaskState = 5;
-       
-       //resetTimers();
-       break;
-       
-       case TEAMCOLORBLUE:
-       intakeTaskState = 6;
-         lifterTaskState = 6;
-       //resetTimers();
-       break;
-       
-       case TEAMCOLORUNKNOWN:
-       intakeTaskState = 7;
-       lifterTaskState = 7;
-       //resetTimers();
-       break;
-       
-       
-       default:
-       break;
-     } 
- }
  
- void updateLifterTask(){
-  //serialValue = Serial.read();
-    switch(serialValue){
-        case LIFTERUP:
-       lifterTaskState = 1;
-       finished3 = false;
-       break;
-       
-       case LIFTERNEUTRAL:
-        lifterTaskState = 2;
-               finished3 = false;
-
-       break;
-       
-       case LIFTERDOWN:
-        lifterTaskState = 3;
-               finished3 = false;
-
-       break;
-       
-       case NOTZEROED:
-         intakeTaskState = 4;
-         lifterTaskState = 4;
-         //resetTimers();
-       break;
-       
-       case TEAMCOLORRED:
-       intakeTaskState = 5;
-         //lifterTaskState = 5;
-       
-       resetTimers();
-       break;
-       
-       case TEAMCOLORBLUE:
-       intakeTaskState = 6;
-         lifterTaskState = 6;
-       //resetTimers();
-       break;
-       
-       case TEAMCOLORUNKNOWN:
-       intakeTaskState = 7;
-       lifterTaskState = 7;
-       //resetTimers();
-       break;
-       
-       default:
-       break;
-       
-      
-     } 
- }
+ 
+ 
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
@@ -280,23 +648,23 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
    
    switch(serialValue){
     case NOTZEROED:
-    intakeTaskState = 4;
-    lifterTaskState = 4;
+    pusher.taskState = 4;
+    lifter.taskState = 4;
     break;
     
     case TEAMCOLORRED:
-    intakeTaskState = 5;
-    lifterTaskState = 5;
+    pusher.taskState = 5;
+    lifter.taskState = 5;
     break;
     
     case TEAMCOLORBLUE:
-    intakeTaskState = 6;
-    lifterTaskState = 6;
+    pusher.taskState = 6;
+    lifter.taskState = 6;
     break;
     
     case TEAMCOLORUNKNOWN:
-    intakeTaskState = 7;
-    lifterTaskState = 7;
+    pusher.taskState = 7;
+    lifter.taskState = 7;
     break;
      
    }
@@ -313,18 +681,18 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
  //\/\/\/\/\/\/\/\/\/
  void dispatchInputs(char serialInput){
     override();
-  switch(lifterTaskState){
+  switch(lifter.taskState){
     case 1:          //Foward
-          wave(forloopthingy3,  impartialForLoopKeeper3,  NUM_LEDS_LIFTER,  ledsLifter,  15,  true,  timer1,  impartialTimeKeeper3,  finished3);           
-    break;
+lifter.wave();    
+break;
     
     case 2:    //Neutral
-      chase(forloopthingy3, 32,  NUM_LEDS_LIFTER,  ledsLifter,  15,  CRGB::Yellow,  CRGB::Blue, true, timer3,  impartialTimeKeeper3,  finished3,chaseround3);
-    break;
+lifter.chase();
+break;
     
     case 3:    //Back
-     multicolordown(forloopthingy3,  impartialForLoopKeeper3, NUM_LEDS_LIFTER,  ledsLifter,  15,  true,  timer3,  impartialTimeKeeper3,  finished3);
-    break;
+lifter.multiColorDown();
+break;
     
     case 4:
     blind();
@@ -354,7 +722,7 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
   //updateLifterTask();
   break;
     default:
-    updateLifterTask();
+    lifter.updateTask();
      
      
     break;
@@ -363,17 +731,17 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
   }
   
   //override();
-  switch(intakeTaskState){
+  switch(pusher.taskState){
     case 1:                //Forward
-         wave(forloopthingy1,  impartialForLoopKeeper1,  NUM_LEDS,  leds,  15,  true,  timer1,  impartialTimeKeeper1,  finished1);           
-    break;
+pusher.wave();
+break;
     
     case 2:    //Neutral
-        chase(forloopthingy1, 32,  NUM_LEDS,  leds,  15,  CRGB::Yellow,  CRGB::Blue, true, timer1,  impartialTimeKeeper1,  finished1, chaseround1);
-    break;
+pusher.chase();
+break;
     
     case 3:      //Back
-         multicolordown(forloopthingy1,  impartialForLoopKeeper1, NUM_LEDS,  leds,  15,  true,  timer1,  impartialTimeKeeper1,  finished1);
+pusher.multiColorDown();
 
     break;
     
@@ -381,47 +749,60 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
     blind();
         resetTimers();
 
-    //updatePusherTask();
    break;
    
    case 5:
    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Red);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
   resetTimers();
-  //updatePusherTask();
    break;
    
    case 6:
    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Blue);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
    resetTimers();
-  //updatePusherTask();
    break;
    
    case 7:
    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Yellow);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
    resetTimers();
-  //updatePusherTask();
    break;
     
     default:
   
    
-                   updatePusherTask();
+                   pusher.updateTask();
                    break;
 
      }
  }
-  //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
+ ///////
+///////
+///////
+///////
+///////
+///////
+//END GLOBAL FUNCTIONS
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+///////
+//START OVERRIDE LIGHT FUNCTIONS
+///////
+///////
+///////
+///////
+///////
+///////
  void blind(){
    for(forloopthingy1 = 0; forloopthingy1 < 7; forloopthingy1++){
    for(timer = 0; timer < NUM_LEDS; timer++){
@@ -439,17 +820,21 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
     }
     
   }
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
- //\/\/\/\/\/\/\/\/\/
+///////
+///////
+///////
+///////
+///////
+///////
+//END OVERRIDE LIGHT FUNCTIONS
+///////
+///////
+///////
+///////
+///////
+///////
  
- void setColorUp(int ledAmount, CRGB ledArray[], int delayTime, int color, bool multitasking, int timerchoice, int impartialTimeKeeper, bool finishedkeeper){
+/* void setColorUp(int ledAmount, CRGB ledArray[], int delayTime, int color, bool multitasking, int timerchoice, int impartialTimeKeeper, bool finishedkeeper){
     if(!finishedkeeper){
     for(timerchoice = impartialTimeKeeper; timerchoice < ledAmount; timerchoice++){
    
@@ -510,6 +895,7 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
   //
   //
   //
+  */
   void twoStripChangerUp(int ledAmountStripOne, int ledAmountStripTwo, CRGB ledArray1[], CRGB ledArray2[], int delayTime, int color){
     
     for(timer = ledAmountStripOne -1; timer >  -1; timer--){
@@ -551,6 +937,7 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
  }
   
   }
+  /*
   /////
   /////
   ////
@@ -601,11 +988,11 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
    delay(delayTime);
       }
    
-   /*if(chaseround == 1){
+   if(chaseround == 1){
     chaseround = 0; 
    }else{
     chaseround = 1; 
-   }*/
+   }
    
    }
    chaseEscape:
@@ -934,10 +1321,11 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
   ///\/\/\/\/
   ///\/\/\/\////\/\/\/\/
   ///\/\/\/\/
+  */
   void test(){
    resetTimers(); //NEEDS TO BE MOVED AND/OR INTEGRATED INTO MULTITASK FUNCTIONS.  
   //chase(forloopthingy2, 32,  NUM_LEDS_LIFTER,  ledsLifter,  15,  CRGB::Yellow,  CRGB::Green, true, timer3,  impartialTimeKeeper3,  finished3);
-  setColorUp(NUM_LEDS, leds,  15, CRGB::Red, true,  timer1,  impartialTimeKeeper1,  finished1); 
+  //setColorUp(NUM_LEDS, leds,  15, CRGB::Red, true,  timer1,  impartialTimeKeeper1,  finished1); 
   }
   
   void useDuelStripUpDown(){
@@ -958,18 +1346,7 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
 
 
 
-void setup(){
-pinMode(DATA_PIN,OUTPUT);
-pinMode(DATA_PIN_LIFTER,OUTPUT);
 
- FastLED.addLeds<WS2811, DATA_PIN>(leds, NUM_LEDS);
- FastLED.addLeds<NEOPIXEL, DATA_PIN_LIFTER>(ledsLifter,NUM_LEDS_LIFTER);
- Serial.begin(9600);
- //Serial.setTimeout(500);
-
-startUpLights(); 
-
-}
 
 ///////////////////////////////////////////////////////////////////// Break of the code between
  //////////////////////////////////////////////////////////////////// Intial startup and loop
@@ -986,7 +1363,7 @@ void loop(){
   serialValue = Serial.read();
   dispatchInputs(serialValue);
   FastLED.show();
-  if(intakeTaskState > 0 or lifterTaskState > 0){    //Only delay if we have lights to show. No reason to delay if there is nothing there.
+  if(pusher.taskState > 0 or lifter.taskState > 0){    //Only delay if we have lights to show. No reason to delay if there is nothing there.
     delay(DELAY);
 }
 
