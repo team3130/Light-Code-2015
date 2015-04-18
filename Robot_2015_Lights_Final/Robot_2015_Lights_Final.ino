@@ -563,7 +563,7 @@ startUpLights();
     dynamicDelay = 10000;
     for(timer = NUM_LEDS -1; timer >  -1; timer--){
    
-     leds[timer] = CRGB::Red;      //Actually green. WS2811's are odd.
+     pusher.leds[timer] = CRGB::Red;      //Actually green. WS2811's are odd.
      FastLED.show();
       if(dynamicDelay > 20){
       dynamicDelay = dynamicDelay/2;
@@ -579,7 +579,7 @@ startUpLights();
  
  for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
    
-     ledsLifter[timer] = CRGB::Green;
+     lifter.leds[timer] = CRGB::Green;
      FastLED.show();
       delay(dynamicDelay);    
    
@@ -587,13 +587,13 @@ startUpLights();
  for(forloopthingy = 0; forloopthingy < 10; forloopthingy++){
  for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
    
-     ledsLifter[timer] = CRGB::White;
+     lifter.leds[timer] = CRGB::White;
    
  }
  
   for(timer = 0; timer < NUM_LEDS; timer++){
    
-     leds[timer] = CRGB::White;
+     pusher.leds[timer] = CRGB::White;
    
  }
  FastLED.show();
@@ -601,13 +601,13 @@ startUpLights();
  
  for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
    
-     ledsLifter[timer] = CRGB::Green;
+     lifter.leds[timer] = CRGB::Green;
    
  }
  
   for(timer = 0; timer < NUM_LEDS; timer++){
    
-     leds[timer] = CRGB::Red;
+     pusher.leds[timer] = CRGB::Red;
    
  }
  FastLED.show();
@@ -615,13 +615,13 @@ startUpLights();
  } 
  for(timer = 0; timer < NUM_LEDS; timer++){
    
-     leds[timer] = CRGB::Black;
+     pusher.leds[timer] = CRGB::Black;
    
  }
  
  for(timer = 0; timer < NUM_LEDS_LIFTER; timer++){
    
-     ledsLifter[timer] = CRGB::Black;
+     lifter.leds[timer] = CRGB::Black;
    
  }
  FastLED.show();
@@ -752,20 +752,20 @@ pusher.multiColorDown();
    break;
    
    case 5:
-   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Red);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Red);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
   resetTimers();
    break;
    
    case 6:
-   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Blue);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Blue);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
    resetTimers();
    break;
    
    case 7:
-   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,leds,ledsLifter,50,CRGB::Yellow);
-  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,ledsLifter,leds,50,CRGB::Black);
+   twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Yellow);
+  twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
    resetTimers();
    break;
     
@@ -806,14 +806,14 @@ pusher.multiColorDown();
  void blind(){
    for(forloopthingy1 = 0; forloopthingy1 < 7; forloopthingy1++){
    for(timer = 0; timer < NUM_LEDS; timer++){
-    leds[timer] = CRGB::White;
-     ledsLifter[timer] = CRGB::White; 
+    pusher.leds[timer] = CRGB::White;
+     lifter.leds[timer] = CRGB::White; 
    }
    FastLED.show();
    delay(100);
    for(timer = 0; timer < NUM_LEDS; timer++){
-    leds[timer] = CRGB::Black;
-     ledsLifter[timer] = CRGB::Black; 
+    pusher.leds[timer] = CRGB::Black;
+     lifter.leds[timer] = CRGB::Black; 
    }
    FastLED.show();
    delay(100);
