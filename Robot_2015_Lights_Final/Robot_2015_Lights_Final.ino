@@ -94,7 +94,7 @@ CRGB ledsLifter[NUM_LEDS_LIFTER];
 class Subsystem
 {
   public:
-  Subsystem(int numberOfLeds);
+  Subsystem(int numberOfLeds,int updateChooser);
   void chase();
   void wave();
   void multiColorDown();
@@ -109,6 +109,7 @@ class Subsystem
   int taskState = 0;
   int _updateChooser;
   int actualNumberOfLeds;
+  bool setToTop =false;
   bool done = false;
   CRGB leds[];
   
@@ -116,10 +117,11 @@ class Subsystem
   
 };
 
- Subsystem::Subsystem(int numberOfLeds){
+ Subsystem::Subsystem(int numberOfLeds, int updateChooser){
    
    actualNumberOfLeds = numberOfLeds;
    CRGB leds[numberOfLeds];
+   _updateChooser = updateChooser;
    
    
   
@@ -358,6 +360,10 @@ void Subsystem::wave(){
 
 void Subsystem::multiColorDown(){
   if(!done){
+    if(!setToTop){
+     setToTop = true;
+    timer = actualNumberOfLeds-1; 
+    }
     switch(forloopthingy){
     case 1:
          leds[timer] = CRGB::Red;
@@ -390,38 +396,27 @@ void Subsystem::multiColorDown(){
    break;
    
         }
-        if(timer == actualNumberOfLeds){
-         timer = 0;
+        if(timer == 0){
+         setToTop = false;
         forloopthingy++; 
         }else{
-         timer++; 
+         timer--; 
         }
         if(forloopthingy == 6){
          done = true; 
         }
+  }else{
+   updateTask(); 
   }
 }
 
 void Subsystem::updateTask(){
  
-  //serialValue = Serial.read();
-       //Calibrated to lifter.
+  
+       if(_updateChooser == 1){
     switch(serialValue){
       
-      case PUSHERNEUTRAL:
-       taskState = 2;
-resetTimers();
-       break;
-       
-       case PUSHERFORWARD:
-        taskState = 1;
-resetTimers();
-       break;
-       
-       case PUSHERBACK:
-        taskState = 3;
-resetTimers();
-       break;
+     
         case LIFTERUP:
        taskState = 1;
        resetTimers();
@@ -462,8 +457,51 @@ break;
        
       
      }
+       }else{
+         switch(serialValue){
+      
+      case PUSHERNEUTRAL:
+       taskState = 2;
+resetTimers();
+       break;
+       
+       case PUSHERFORWARD:
+        taskState = 1;
+resetTimers();
+       break;
+       
+       case PUSHERBACK:
+        taskState = 3;
+resetTimers();
+       break;
+        
+       
+       case NOTZEROED:
+         taskState = 4;
+resetTimers();    
+break;
+       
+       case TEAMCOLORRED:
+       taskState = 5;
+       resetTimers();
+       break;
+       
+       case TEAMCOLORBLUE:
+       taskState = 6;
+resetTimers();      
+break;
+       
+       case TEAMCOLORUNKNOWN:
+       taskState = 7;
+resetTimers();
+break;
+       
+       default:
+       break;
+       }
  
  
+}
 }
 ///////
 ///////
@@ -494,8 +532,8 @@ break;
 
 
 
-Subsystem lifter(NUM_LEDS_LIFTER);
-Subsystem pusher(NUM_LEDS);
+Subsystem lifter(NUM_LEDS_LIFTER,1);
+Subsystem pusher(NUM_LEDS,0);
 void setup(){
 pinMode(DATA_PIN,OUTPUT);
 pinMode(DATA_PIN_LIFTER,OUTPUT);
@@ -679,7 +717,7 @@ startUpLights();
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
  //\/\/\/\/\/\/\/\/\/
- void dispatchInputs(char serialInput){
+ void dispatchInputs(){
     override();
   switch(lifter.taskState){
     case 1:          //Foward
@@ -1361,7 +1399,7 @@ pusher.multiColorDown();
 void loop(){
   
   serialValue = Serial.read();
-  dispatchInputs(serialValue);
+  dispatchInputs();
   FastLED.show();
   if(pusher.taskState > 0 or lifter.taskState > 0){    //Only delay if we have lights to show. No reason to delay if there is nothing there.
     delay(DELAY);
