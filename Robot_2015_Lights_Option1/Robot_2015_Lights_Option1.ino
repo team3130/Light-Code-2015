@@ -43,6 +43,7 @@ class Subsystem {
 public:
 	Subsystem(int numberOfLeds);
 	void interlace(CRGB even, CRGB odd);
+	void setColor(CRGB color);
 	void execute();
 	void chase();
 	void wave();
@@ -58,7 +59,6 @@ public:
 	bool setToTop = false;
 	bool done = false;
 	CRGB leds[];
-	Subsystem& operator=(CRGB color);
 
 private:
 
@@ -76,7 +76,7 @@ void Subsystem::resetSubsystem() {
 	cycleNumber = 0;
 	sequenceStep = 0;
 	idleCycles = 0;
-	*this = CRGB::Black;
+	setColor(CRGB::Black);
 }
 
 void Subsystem::execute() {
@@ -116,11 +116,10 @@ void Subsystem::execute() {
 	}
 }
 
-Subsystem& Subsystem::operator=(CRGB color) {
+void Subsystem::setColor(CRGB color){
 	for (int t = 0; t < actualNumberOfLeds; t++) {
 		leds[t] = color;
 	}
-	return *this;
 }
 
 void Subsystem::interlace(CRGB even, CRGB odd) {
@@ -148,10 +147,10 @@ void Subsystem::chase() {
 
 void Subsystem::blind() {
 	if(cycleNumber%2 == 0) {
-		*this = CRGB::White;
+		setColor(CRGB::White);
 	}
 	else {
-		*this = CRGB::Black;
+		setColor(CRGB::Black);
 	}
 	idleCycles = 5;
 	if(cycleNumber++ >= 10) {
@@ -171,7 +170,7 @@ void Subsystem::breathe(CRGB color) {
 		frac = 1.0 - ((upCycles - cycleNumber) / downCycles);
 	}
 	calculated.setRGB(frac*color.r, frac*color.g, frac*color.b);
-	*this = calculated;
+	setColor(calculated);
 	if(cycleNumber > upCycles + downCycles) {
 		done = true;
 	}
@@ -417,6 +416,9 @@ void Subsystem::multiColorDown() {
 ///////
 ///////
 
+Subsystem lifter(NUM_LEDS_LIFTER);
+Subsystem pusher(NUM_LEDS_PUSHER);
+
 ///////
 ///////
 ///////
@@ -585,8 +587,6 @@ void startUpLights() {
 //////////////////////////////////////////////////////////////////// Intial startup and loop
 /////////////////////
 
-Subsystem lifter(NUM_LEDS_LIFTER);
-Subsystem pusher(NUM_LEDS_PUSHER);
 void setup() {
 	pinMode(DATA_PIN_PUSHER, OUTPUT);
 	pinMode(DATA_PIN_LIFTER, OUTPUT);
