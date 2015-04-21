@@ -35,17 +35,18 @@ enum TaskStateVar {
 	kBreatheBlue,
 	kBreatheUnknown,
 	kWave,
-	kChase,
+	kChaseUp,
+	kChaseDown,
 	kRainbow
 };
 
 class Subsystem {
 public:
 	Subsystem(int numberOfLeds);
-	void interlace(CRGB even, CRGB odd);
+	void interlace(int size, CRGB *pattern);
 	void setColor(CRGB color);
 	void execute();
-	void chase();
+	void chase(int speed);
 	void wave();
 	void breathe(CRGB color);
 	void multiColorDown();
@@ -85,15 +86,18 @@ void Subsystem::execute() {
 	else idleCycles--;
 
 	switch (taskState) {
-	case kWave:          //Foward
+	case kWave:
 		wave();
 		break;
 
-	case kChase:    //Neutral
-		chase();
+	case kChaseUp:
+		chase(5);
+		break;
+	case kChaseDown:
+		chase(-5);
 		break;
 
-	case kRainbow:    //Back
+	case kRainbow:
 		multiColorDown();
 		break;
 
@@ -122,25 +126,26 @@ void Subsystem::setColor(CRGB color){
 	}
 }
 
-void Subsystem::interlace(CRGB even, CRGB odd) {
+void Subsystem::interlace(int size, CRGB *pattern) {
 	for (int t = 0; t < actualNumberOfLeds; t++) {
-		if (t % 2 == 0) {
-			leds[t] = even;
-		} else {
-			leds[t] = odd;
-		}
+		leds[t] = pattern[t % size];
 	}
 
 }
 
-void Subsystem::chase() {
-	if (cycleNumber%2 == 0) {
-		interlace(CRGB::Green, CRGB::Yellow);
-	} else {
-		interlace(CRGB::Yellow, CRGB::Green);
+void Subsystem::chase(int speed) {
+	CRGB pattern[3];
+	for(int t=0; t < sizeof(pattern); t++) {
+		if(
+				(speed > 0 && cycleNumber % sizeof(pattern) == 0) ||
+				(speed < 0 && -cycleNumber % sizeof(pattern) == 0) ) {
+			pattern[t] = CRGB::Yellow;
+		}
+		else pattern[t] = CRGB::Black;
 	}
-	idleCycles = 10;
-	if (cycleNumber++ >= 25) {
+	interlace(sizeof(pattern), pattern);
+	idleCycles = abs(speed);
+	if (cycleNumber++ >= 250) {
 		done = true;
 	}
 }
@@ -343,7 +348,7 @@ void Subsystem::wave() {
 		}
 		if (cycleNumber == sequenceStep) {
 			cycleNumber = 0;
-			cycleNumber++;
+			sequenceStep++;
 		} else {
 			cycleNumber++;
 		}
@@ -480,7 +485,7 @@ void dispatchInputs() {
 
 		case LIFTERUP:
 			lifter.resetSubsystem();
-			lifter.taskState = kChase;
+			lifter.taskState = kChaseUp;
 			break;
 
 		case LIFTERNEUTRAL:
@@ -490,23 +495,23 @@ void dispatchInputs() {
 
 		case LIFTERDOWN:
 			lifter.resetSubsystem();
-			lifter.taskState = kRainbow;
+			lifter.taskState = kChaseDown;
 			break;
 
 
 		case PUSHERNEUTRAL:
 			pusher.resetSubsystem();
-			pusher.taskState = kChase;
+			pusher.taskState = kWave;
 			break;
 
 		case PUSHERFORWARD:
 			pusher.resetSubsystem();
-			pusher.taskState = kWave;
+			pusher.taskState = kChaseDown;
 			break;
 
 		case PUSHERBACK:
 			pusher.resetSubsystem();
-			pusher.taskState = kRainbow;
+			pusher.taskState = kChaseUp;
 			break;
 
 		default:
