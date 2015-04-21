@@ -98,6 +98,7 @@ class Subsystem
   void chase();
   void wave();
   void multiColorDown();
+  void setColor(CRGB color);
   void resetSubsystem();
   void resetTimers();
   void updateTask();
@@ -128,8 +129,10 @@ class Subsystem
 }
 
 void Subsystem::resetSubsystem(){
-    resetTimers();
    taskState = 0;
+    setColor(CRGB::Black);
+        resetTimers();
+
 }
 
 void Subsystem::resetTimers(){
@@ -139,6 +142,13 @@ void Subsystem::resetTimers(){
    impartialTimeKeeper = 0;
    impartialForLoopKeeper = 0;
    
+}
+
+void Subsystem::setColor(CRGB color){
+  for(timer = 0; timer< actualNumberOfLeds; timer++){
+   leds[timer] = color; 
+  }
+  FastLED.show();
 }
 
 void Subsystem::chase(){
@@ -543,7 +553,9 @@ pinMode(DATA_PIN_LIFTER,OUTPUT);
  Serial.begin(9600);
  //Serial.setTimeout(500);
 
-startUpLights(); 
+startUpLights();
+lifter.resetSubsystem();
+pusher.resetSubsystem();
 }
 
 
