@@ -500,8 +500,10 @@ void dispatchInputs() {
 			break;
 
 		case LIFTERNEUTRAL:
-			lifter.resetSubsystem();
-			lifter.taskState = kWave;
+			if(lifter.taskState != kWave || lifter.done) {
+				lifter.resetSubsystem();
+				lifter.taskState = kWave;
+			}
 			break;
 
 		case LIFTERDOWN:
@@ -511,8 +513,10 @@ void dispatchInputs() {
 
 
 		case PUSHERNEUTRAL:
-			pusher.resetSubsystem();
-			pusher.taskState = kWave;
+			if(pusher.taskState != kWave || pusher.done) {
+				pusher.resetSubsystem();
+				pusher.taskState = kWave;
+			}
 			break;
 
 		case PUSHERFORWARD:
