@@ -26,7 +26,9 @@
 #define DATA_PIN_LIFTER 3
 #define DELAY 20 //sets the delay between light updates to 15 milliseconds
 
-char serialValue = 0;
+#define CHASE_SIZE 3
+
+int BigTimer = 0;
 
 enum TaskStateVar {
 	kInit,
@@ -59,7 +61,7 @@ public:
 	int actualNumberOfLeds;
 	bool setToTop = false;
 	bool done = false;
-	CRGB leds[];
+	CRGB leds[64];
 
 private:
 
@@ -68,7 +70,6 @@ private:
 Subsystem::Subsystem(int numberOfLeds) {
 	taskState = kInit;
 	actualNumberOfLeds = numberOfLeds;
-	CRGB leds[numberOfLeds];
 	resetSubsystem();
 }
 
@@ -82,8 +83,10 @@ void Subsystem::resetSubsystem() {
 
 void Subsystem::execute() {
 	if(done) return;
-	if(idleCycles > 0) return;
-	else idleCycles--;
+	if(idleCycles > 0) {
+		idleCycles--;
+		return;
+	}
 
 	switch (taskState) {
 	case kWave:
@@ -112,7 +115,7 @@ void Subsystem::execute() {
 		breathe(CRGB::Red);
 		break;
 	case kBreatheUnknown:
-		breathe(CRGB::Violet);
+		breathe(CRGB::Cyan);
 		break;
 
 	default:
@@ -134,23 +137,25 @@ void Subsystem::interlace(int size, CRGB *pattern) {
 }
 
 void Subsystem::chase(int speed) {
-	CRGB pattern[3];
-	for(int t=0; t < sizeof(pattern); t++) {
+	CRGB pattern[CHASE_SIZE];
+	for(int t=0; t < CHASE_SIZE; t++) {
 		if(
-				(speed > 0 && cycleNumber % sizeof(pattern) == 0) ||
-				(speed < 0 && -cycleNumber % sizeof(pattern) == 0) ) {
+				(speed > 0 && (t+cycleNumber) % CHASE_SIZE == 0) ||
+				(speed < 0 && (t-cycleNumber) % CHASE_SIZE == 0) ) {
 			pattern[t] = CRGB::Yellow;
 		}
 		else pattern[t] = CRGB::Black;
 	}
-	interlace(sizeof(pattern), pattern);
+	interlace(CHASE_SIZE, pattern);
 	idleCycles = abs(speed);
 	if (cycleNumber++ >= 250) {
+		resetSubsystem();
 		done = true;
 	}
 }
 
 void Subsystem::blind() {
+	if(done) return;
 	if(cycleNumber%2 == 0) {
 		setColor(CRGB::White);
 	}
@@ -159,6 +164,7 @@ void Subsystem::blind() {
 	}
 	idleCycles = 5;
 	if(cycleNumber++ >= 10) {
+		resetSubsystem();
 		done = true;
 	}
 }
@@ -166,22 +172,27 @@ void Subsystem::blind() {
 void Subsystem::breathe(CRGB color) {
 	static const int upCycles = 50;
 	static const int downCycles = 100;
+	static const int totalCycles = 300;
+	static const float maxPower = 0.5;
 	CRGB calculated = CRGB::Black;
 	float frac = 0.0;
 	if(cycleNumber < upCycles) {
-		frac = 1.0 * cycleNumber / upCycles;
+		frac = maxPower * cycleNumber / upCycles;
+	}
+	else if(cycleNumber < upCycles + downCycles)  {
+		frac = maxPower - (maxPower*( cycleNumber - upCycles) / downCycles);
+	}
+	else if(cycleNumber < totalCycles) {
+		frac = 0;
 	}
 	else {
-		frac = 1.0 - ((upCycles - cycleNumber) / downCycles);
+		resetSubsystem();
+		done = true;
+		return;
 	}
 	calculated.setRGB(frac*color.r, frac*color.g, frac*color.b);
 	setColor(calculated);
-	if(cycleNumber > upCycles + downCycles) {
-		done = true;
-	}
-	else {
-		cycleNumber++;
-	}
+	cycleNumber++;
 }
 
 void Subsystem::wave() {
@@ -452,7 +463,7 @@ Subsystem pusher(NUM_LEDS_PUSHER);
 //\/\/\/\/\/\/\/\/\/
 void dispatchInputs() {
 	while(Serial.available() > 0) {
-		serialValue = Serial.read();
+		char serialValue = Serial.read();
 
 		switch (serialValue) {
 		case NOTZEROED:
@@ -515,28 +526,39 @@ void dispatchInputs() {
 			break;
 
 		default:
+			pusher.resetSubsystem();
+			pusher.taskState = kInit;
+			lifter.resetSubsystem();
+			lifter.taskState = kInit;
 			break;
 		}
+		BigTimer = 0;
+	}
+	if(BigTimer++ > 500) {
+		lifter.resetSubsystem();
+		lifter.taskState = kInit;
+		pusher.resetSubsystem();
+		pusher.taskState = kInit;
+		BigTimer = 0;
 	}
 }
 
 
 void startUpLights() {
-	int dynamicDelay = 10000;
+	int dynamicDelay = 1000;
 	for (int timer = NUM_LEDS_PUSHER - 1; timer > -1; timer--) {
 
 		pusher.leds[timer] = CRGB::Red;      //Actually green. WS2811's are odd.
 		FastLED.show();
-		if (dynamicDelay > 20) {
-			dynamicDelay = dynamicDelay / 2;
+		if (dynamicDelay > DELAY) {
+			dynamicDelay = 0.8 * dynamicDelay;
 		}
-		if (dynamicDelay < 10) {
-			dynamicDelay = 20;
+		if (dynamicDelay < DELAY) {
+			dynamicDelay = DELAY;
 		}
 		delay(dynamicDelay);
 
 	}
-
 	for (int timer = 0; timer < NUM_LEDS_LIFTER; timer++) {
 
 		lifter.leds[timer] = CRGB::Green;
@@ -544,46 +566,46 @@ void startUpLights() {
 		delay(dynamicDelay);
 
 	}
-	for (int forloopthingy = 0; forloopthingy < 10; forloopthingy++) {
-		for (int timer = 0; timer < NUM_LEDS_LIFTER; timer++) {
 
-			lifter.leds[timer] = CRGB::White;
-
-		}
-
-		for (int timer = 0; timer < NUM_LEDS_PUSHER; timer++) {
-
-			pusher.leds[timer] = CRGB::White;
-
-		}
+	lifter.resetSubsystem();
+	pusher.resetSubsystem();
+	for (int timer = 0; timer < 50; timer++) {
+		pusher.blind();      //Actually green. WS2811's are odd.
+		lifter.blind();
 		FastLED.show();
-		delay(100);
-
-		for (int timer = 0; timer < NUM_LEDS_LIFTER; timer++) {
-
-			lifter.leds[timer] = CRGB::Green;
-
-		}
-
-		for (int timer = 0; timer < NUM_LEDS_PUSHER; timer++) {
-
-			pusher.leds[timer] = CRGB::Red;
-
-		}
+		delay(DELAY);
+	}
+	lifter.resetSubsystem();
+	pusher.resetSubsystem();
+	for (int timer = 0; timer < 250; timer++) {
+		pusher.wave();
+		lifter.wave();
 		FastLED.show();
-		delay(100);
+		delay(DELAY);
 	}
-	for (int timer = 0; timer < NUM_LEDS_PUSHER; timer++) {
-
-		pusher.leds[timer] = CRGB::Black;
-
+	lifter.resetSubsystem();
+	lifter.taskState = kChaseUp;
+	pusher.resetSubsystem();
+	pusher.taskState = kChaseDown;
+	for (int timer = 0; timer < 100; timer++) {
+		pusher.execute();
+		lifter.execute();
+		FastLED.show();
+		delay(DELAY);
+	}
+	lifter.resetSubsystem();
+	lifter.taskState = kChaseDown;
+	pusher.resetSubsystem();
+	pusher.taskState = kChaseUp;
+	for (int timer = 0; timer < 100; timer++) {
+		pusher.execute();
+		lifter.execute();
+		FastLED.show();
+		delay(DELAY);
 	}
 
-	for (int timer = 0; timer < NUM_LEDS_LIFTER; timer++) {
-
-		lifter.leds[timer] = CRGB::Black;
-
-	}
+	lifter.resetSubsystem();
+	pusher.resetSubsystem();
 	FastLED.show();
 }
 
@@ -597,11 +619,14 @@ void setup() {
 	pinMode(DATA_PIN_LIFTER, OUTPUT);
 
 	FastLED.addLeds<WS2811, DATA_PIN_PUSHER>(pusher.leds, NUM_LEDS_PUSHER);
+	//FastLED.addLeds<NEOPIXEL, DATA_PIN_PUSHER>(pusher.leds, NUM_LEDS_PUSHER);
 	FastLED.addLeds<NEOPIXEL, DATA_PIN_LIFTER>(lifter.leds, NUM_LEDS_LIFTER);
 	startUpLights();
 
 	lifter.resetSubsystem();
+	lifter.taskState = kInit;
 	pusher.resetSubsystem();
+	pusher.taskState = kInit;
 	FastLED.show();
 	Serial.begin(9600);
 }
