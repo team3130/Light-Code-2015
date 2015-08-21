@@ -10,7 +10,7 @@
 #define NUM_LEDS_LIFTER 39
 
 #define NOTZEROED 'Z'
-#define TEAMCOLORRED 'R'
+#define TEAMCOLORRED 'E'
 #define TEAMCOLORBLUE 'B'
 #define TEAMCOLORUNKNOWN 'U'
 #define DRIVEFOWARD '3'
@@ -46,7 +46,7 @@
   bool chaseround3 = 0;
   int timer = 0;                        //Tons of outdated variables.
   int timer1 = 0;                       //To be deleted.
-  int timer2 = 0;
+  int timer2 = 0;                      //Only still here so old functions don't throw errors
   int timer3 = 0;
   int impartialTimeKeeper1 = 0;
   int impartialTimeKeeper2 = 0;
@@ -60,19 +60,7 @@
   bool finished1 = false;
   bool finished2 = false;
   bool finished3 = false;
-///////
-///////
-///////
-///////
-///////
-///////
-//START LIGHT DECLARATION
-///////
-///////
-///////
-///////
-///////
-///////
+
 
 
 
@@ -84,13 +72,20 @@
 ///////
 ///////
 ///////
-//START LIFTER CLASS
+//START Subsystem CLASS
 ///////
 ///////
 ///////
 ///////
 ///////
 ///////
+
+void flushkinda(){
+ for(timer3 = 0; timer3<100; timer++){
+  Serial.read();
+ } 
+}
+
 class Subsystem
 {
   public:
@@ -98,6 +93,7 @@ class Subsystem
   void chase();
   void wave();
   void multiColorDown();
+  void blind();
   void setColor(CRGB color);
   void resetSubsystem();
   void resetTimers();
@@ -416,6 +412,22 @@ void Subsystem::multiColorDown(){
         if(forloopthingy == 6){
          done = true; 
         }
+  }else{
+   updateTask(); 
+  }
+}
+
+void Subsystem::blind(){
+  if(!done){
+    if(timer%2 == 0){
+      setColor(CRGB::White);
+    }else{
+      setColor(CRGB::Black);
+    }
+    timer++;
+    if(timer == 16){
+     done = true; 
+    }
   }else{
    updateTask(); 
   }
@@ -759,8 +771,7 @@ lifter.multiColorDown();
 break;
     
     case 4:
-    blind();
-        resetTimers();
+    lifter.blind();
 
     //updateLifterTask();
     break;
@@ -768,21 +779,24 @@ break;
     case 5:
     twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Red);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
-   resetTimers();
+flushkinda();
+resetTimers();
   //updateLifterTask();
     break;
     
     case 6:
     twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Blue);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
-    resetTimers();
+flushkinda();
+resetTimers();
   //updateLifterTask();
     break;
     
     case 7:
     twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Yellow);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
-  resetTimers();
+flushkinda();
+resetTimers();
   //updateLifterTask();
   break;
     default:
@@ -810,27 +824,29 @@ pusher.multiColorDown();
     break;
     
     case 4:
-    blind();
-        resetTimers();
+    pusher.blind();
 
    break;
    
    case 5:
    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Red);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
-  resetTimers();
+flushkinda();
+resetTimers();
    break;
    
    case 6:
    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Blue);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
-   resetTimers();
+flushkinda();
+resetTimers();
    break;
    
    case 7:
    twoStripChangerUp(NUM_LEDS,NUM_LEDS_LIFTER,pusher.leds,lifter.leds,50,CRGB::Yellow);
   twoStripChangerUp(NUM_LEDS_LIFTER,NUM_LEDS,lifter.leds,pusher.leds,50,CRGB::Black);
-   resetTimers();
+flushkinda();
+resetTimers();
    break;
     
     default:
@@ -1422,13 +1438,19 @@ pusher.multiColorDown();
  ///
  //
 
+
 void loop(){
   
   serialValue = Serial.read();
   dispatchInputs();
   FastLED.show();
-  if(pusher.taskState > 0 or lifter.taskState > 0){    //Only delay if we have lights to show. No reason to delay if there is nothing there.
+  if(pusher.taskState > 0 or lifter.taskState > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
+    if(pusher.taskState >= 4 and lifter.taskState >= 4){
+     delay(250); //Delay extra if running an override as most overrides shouldn't update fast.
+    }else{
+      
     delay(DELAY);
+    }
 }
 
  
