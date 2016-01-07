@@ -1,99 +1,88 @@
-//DO NOT USE Port 13
-//Code designed to run WS2811 LEDS and NEOPIXELs
-//Attempts to multitask ceratin functions by breaking for loops and reentering them
-//Based on non-for loop timers. This should cause both to update their assigend
-// light strip once and then go and update the next strip.
+// DO NOT USE Port 13
+// Code designed to run WS2811 LEDS and NEOPIXELs
+// Use Subsystem class to describe a strip
+// Use Command class to design an animation
+// Command is similar to FIRST Command based robot programming:
+//  There is Initialize that runs once every assignment to a Subsystem,
+//  There is Execute that runs every cycle (with a tweak, see "speed"),
+//  There is IsFinished that should return true when the Command is done.
+
 #include <FastLED.h>
 
 #define NUM_LEDS_PUSHER 32
 #define NUM_LEDS_LIFTER 32
 
-#define NOTZEROED 'Z'
-#define TEAMCOLORRED 'R'
-#define TEAMCOLORBLUE 'B'
-#define TEAMCOLORUNKNOWN 'U'
-#define DRIVEFOWARD '3'
-#define DRIVEBACK '4'
-#define DRIVEIDLE '5'
-#define LIFTERUP '6'
-#define LIFTERDOWN '7'
-#define LIFTERNEUTRAL '8'
-#define PUSHERFORWARD '9'
-#define PUSHERBACK '1'
-#define PUSHERNEUTRAL '0'
-
-#define DATA_PIN_PUSHER 4 //Using data pin one for primary light strip pin timer. Once again highly subject to change
+#define DATA_PIN_PUSHER 4
 #define DATA_PIN_LIFTER 3
+
 #define DELAY 20 //sets the delay between light updates in milliseconds
 
 
-int BigTimer = 0;
-
 enum TaskStateVar {
-	kInit,
-	kZeroMe,
-	kBreatheRed,
-	kBreatheBlue,
-	kBreatheUnknown,
-	kWave,
-	kChaseUp,
-	kChaseDown,
-	kRainbow
+  kInit,
+  kZeroMe,
+  kBreatheRed,
+  kBreatheBlue,
+  kBreatheUnknown,
+  kWave,
+  kChaseUp,
+  kChaseDown,
+  kRainbow
 };
+
+
+/*
+   Under the hood stuff. TODO: move it to a library maybe
+*/
 
 class Command;
 
 class Subsystem {
-public:
-	Subsystem(int numberOfLeds);
-	~Subsystem();
-	void interlace(int size, CRGB *pattern);
-	void setColor(CRGB color);
-  void SetDefaultCommand(Command *command);
-  void SetCurrentCommand(Command *command);
-	void execute();
- /*
-	void chase(int speed);
-	void wave();
-	void breathe(CRGB color);
-	void multiColorDown();
-	void blind();
-	void resetSubsystem();
-	TaskStateVar taskState;
- */
-	int actualNumberOfLeds;
-	CRGB* leds;
+  public:
+    CRGB* leds;
+    Subsystem(int numberOfLeds);
+    ~Subsystem();
+    void SetDefaultCommand(Command *command);
+    void SetCurrentCommand(Command *command);
+    void execute();
 
-private:
-  Command *default_command;
-  Command *current_command;
+    void Interlace(int size, CRGB *pattern);
+    void SetColor(CRGB color);
+
+  private:
+    int actualNumberOfLeds;
+    Command *default_command;
+    Command *current_command;
 };
 
 class Command {
-public:
-  Command(Subsystem *subsystem, int speed=1);
-  ~Command();
-  virtual void Initialize();
-  bool Run();
-  virtual void Execute();
-  virtual bool IsFinished();
-  virtual void End();
-protected:
-  Subsystem *my_strip;
-  int cycleNumber = 0;
-  int idleCycles = 0;
-  int my_speed = 1;
+  public:
+    Command(Subsystem *subsystem, int speed = 1);
+    ~Command();
+    virtual void Initialize();
+    bool Run();
+    virtual void Execute();
+    virtual bool IsFinished();
+    virtual void End();
+  protected:
+    Subsystem *my_strip;
+    int cycleNumber = 0;
+    int idleCycles = 0;
+    int my_speed = 1;
 };
 
+
+// Subsystem class implementation
+
 Subsystem::Subsystem(int numberOfLeds) {
-	leds = new CRGB[numberOfLeds];
-	actualNumberOfLeds = numberOfLeds;
+  leds = new CRGB[numberOfLeds];
+  actualNumberOfLeds = numberOfLeds;
   default_command = NULL;
   current_command = NULL;
 }
 
 Subsystem::~Subsystem() {
-	delete leds;
+  delete leds;
 }
 
 void Subsystem::SetDefaultCommand(Command *command) {
@@ -113,7 +102,7 @@ void Subsystem::execute() {
       default_command->Initialize();
     }
   }
-  else if(default_command != NULL) {
+  else if (default_command != NULL) {
     if (!default_command->Run()) {
       default_command->Initialize();
     }
@@ -121,38 +110,21 @@ void Subsystem::execute() {
 }
 
 
-
-void Subsystem::setColor(CRGB color){
-	for (int t = 0; t < actualNumberOfLeds; t++) {
-		leds[t] = color;
-	}
-//  Serial.print("Set color LEDs: ");
-//  Serial.print((int)leds);
-//  Serial.print("\n");
+void Subsystem::SetColor(CRGB color) {
+  for (int t = 0; t < actualNumberOfLeds; t++) {
+    leds[t] = color;
+  }
 }
 
-void Subsystem::interlace(int size, CRGB *pattern) {
-	for (int t = 0; t < actualNumberOfLeds; t++) {
-		leds[t] = pattern[t % size];
-	}
-/*  
-  Serial.print("Interlace LEDs: ");
-  Serial.print((int)leds);
-  Serial.print(", size=");
-  Serial.print(size);
-  Serial.print(", R=");
-  Serial.print(leds[0].r);
-  Serial.print(", G=");
-  Serial.print(leds[0].g);
-  Serial.print(", B=");
-  Serial.print(leds[0].b);
-  Serial.print("\n");
-*/
+void Subsystem::Interlace(int size, CRGB *pattern) {
+  for (int t = 0; t < actualNumberOfLeds; t++) {
+    leds[t] = pattern[t % size];
+  }
 }
 
 
 
-
+// Command class implementation
 
 Command::Command (Subsystem *subsystem, int speed)
   : my_strip(subsystem)
@@ -165,7 +137,7 @@ void Command::Initialize() {
 }
 
 bool Command::Run() {
-  if(idleCycles > 0) {
+  if (idleCycles > 0) {
     idleCycles--;
     return true;
   }
@@ -185,32 +157,47 @@ void Command::End() {
   Serial.print(" has finished\n");
 }
 
+/*
+   End of ""Under the hood section
+*/
+
+
+
+
+/*
+   Command family classes represent different blinky styles.
+   Just extend the Command class and be creative.
+*/
+
+// Chase - simple chasing lights like in a marquee sign.
+
 class Chase : public Command {
-  const static int CHASE_SIZE = 5;
-public:
-  Chase(Subsystem *s): Command(s, 5) {};
-  void Execute();
-  bool IsFinished();
-private:
-  CRGB pattern[CHASE_SIZE];
+    const static int CHASE_SIZE = 5;
+    const static int CHASE_SPEED = 5;
+  public:
+    Chase(Subsystem *s): Command(s, CHASE_SPEED) {};
+    void Execute();
+    bool IsFinished();
+  private:
+    CRGB pattern[CHASE_SIZE];
 };
 
 void Chase::Execute() {
-	for(int t=0; t < CHASE_SIZE; t++) {
-		if(
-				(my_speed > 0 && (t+cycleNumber) % CHASE_SIZE == 0) ||
-				(my_speed < 0 && (t-cycleNumber) % CHASE_SIZE == 0) ) {
-			pattern[t] = CRGB::Yellow;
-		}
-		else pattern[t] = CRGB::Black;
-	}
+  for (int t = 0; t < CHASE_SIZE; t++) {
+    if (
+      (my_speed > 0 && (t + cycleNumber) % CHASE_SIZE == 0) ||
+      (my_speed < 0 && (t - cycleNumber) % CHASE_SIZE == 0) ) {
+      pattern[t] = CRGB::Yellow;
+    }
+    else pattern[t] = CRGB::Black;
+  }
   if (my_strip != NULL) {
-  	my_strip->interlace(CHASE_SIZE, pattern);
+    my_strip->Interlace(CHASE_SIZE, pattern);
   }
 }
 
 bool Chase::IsFinished() {
-	return (cycleNumber >= 2500);
+  return (cycleNumber >= 2500);
 }
 
 
@@ -219,84 +206,91 @@ bool Chase::IsFinished() {
 
 /*
 
-void Subsystem::blind() {
-	if(done) return;
-	if(cycleNumber%2 == 0) {
-		setColor(CRGB::White);
-	}
-	else {
-		setColor(CRGB::Black);
-	}
-	idleCycles = 5;
-	if(cycleNumber++ >= 10) {
-		resetSubsystem();
-		done = true;
-	}
-}
+TODO: convert these into classes...
 
-void Subsystem::breathe(CRGB color) {
-	static const int upCycles = 50;
-	static const int downCycles = 100;
-	static const int totalCycles = 300;
-	static const float maxPower = 0.5;
-	CRGB calculated = CRGB::Black;
-	float frac = 0.0;
-	if(cycleNumber < upCycles) {
-		frac = maxPower * cycleNumber / upCycles;
-	}
-	else if(cycleNumber < upCycles + downCycles)  {
-		frac = maxPower - (maxPower*( cycleNumber - upCycles) / downCycles);
-	}
-	else if(cycleNumber < totalCycles) {
-		frac = 0;
-	}
-	else {
-		resetSubsystem();
-		done = true;
-		return;
-	}
-	calculated.setRGB(frac*color.r, frac*color.g, frac*color.b);
-	setColor(calculated);
-	cycleNumber++;
-}
+  void Subsystem::blind() {
+  if(done) return;
+  if(cycleNumber%2 == 0) {
+    SetColor(CRGB::White);
+  }
+  else {
+    SetColor(CRGB::Black);
+  }
+  idleCycles = 5;
+  if(cycleNumber++ >= 10) {
+    resetSubsystem();
+    done = true;
+  }
+  }
+
+  void Subsystem::breathe(CRGB color) {
+  static const int upCycles = 50;
+  static const int downCycles = 100;
+  static const int totalCycles = 300;
+  static const float maxPower = 0.5;
+  CRGB calculated = CRGB::Black;
+  float frac = 0.0;
+  if(cycleNumber < upCycles) {
+    frac = maxPower * cycleNumber / upCycles;
+  }
+  else if(cycleNumber < upCycles + downCycles)  {
+    frac = maxPower - (maxPower*( cycleNumber - upCycles) / downCycles);
+  }
+  else if(cycleNumber < totalCycles) {
+    frac = 0;
+  }
+  else {
+    resetSubsystem();
+    done = true;
+    return;
+  }
+  calculated.setRGB(frac*color.r, frac*color.g, frac*color.b);
+  SetColor(calculated);
+  cycleNumber++;
+  }
 */
 
 
-Subsystem lifter(NUM_LEDS_LIFTER);
-Subsystem pusher(NUM_LEDS_PUSHER);
-
-
-///////////////////////////////////////////////////////////////////// Break of the code between
-//////////////////////////////////////////////////////////////////// Intial startup and loop
+Subsystem *lifter;
+Subsystem *pusher;
+Command *default_lifter;
+Command *default_pusher;
 
 void setup() {
   Serial.begin(9600);
   Serial.print("Initializing...\n");
 
-	pinMode(DATA_PIN_PUSHER, OUTPUT);
-	pinMode(DATA_PIN_LIFTER, OUTPUT);
+  pinMode(DATA_PIN_PUSHER, OUTPUT);
+  pinMode(DATA_PIN_LIFTER, OUTPUT);
 
-	FastLED.addLeds<WS2811, DATA_PIN_PUSHER>(pusher.leds, NUM_LEDS_PUSHER);
-	//FastLED.addLeds<NEOPIXEL, DATA_PIN_PUSHER>(pusher.leds, NUM_LEDS_PUSHER);
-	FastLED.addLeds<NEOPIXEL, DATA_PIN_LIFTER>(lifter.leds, NUM_LEDS_LIFTER);
+  lifter = new Subsystem(NUM_LEDS_LIFTER);
+  pusher = new Subsystem(NUM_LEDS_PUSHER);
+  default_lifter = new Chase(lifter);
+  default_pusher = new Chase(pusher);
 
-  lifter.SetDefaultCommand(new Chase(&lifter));
-  pusher.SetDefaultCommand(new Chase(&pusher));
-  lifter.setColor(CRGB::Yellow);
-  pusher.setColor(CRGB::Yellow);
-	FastLED.show();
-  delay(DELAY);
-  lifter.setColor(CRGB::Black);
-  pusher.setColor(CRGB::Black);
+  lifter->SetDefaultCommand(default_lifter);
+  pusher->SetDefaultCommand(default_pusher);
+
+  FastLED.addLeds<WS2811, DATA_PIN_PUSHER>(pusher->leds, NUM_LEDS_PUSHER);
+  FastLED.addLeds<NEOPIXEL, DATA_PIN_LIFTER>(lifter->leds, NUM_LEDS_LIFTER);
+
+  lifter->SetColor(CRGB::Yellow);
+  pusher->SetColor(CRGB::Yellow);
   FastLED.show();
+  FastLED.delay(DELAY);
+  lifter->SetColor(CRGB::Black);
+  pusher->SetColor(CRGB::Black);
+  FastLED.show();
+  FastLED.delay(DELAY);
   Serial.print("Init is done. Starting...\n");
 }
 
 
 void loop() {
-//	dispatchInputs();
-	lifter.execute();
-	pusher.execute();
-	FastLED.show();
-	delay(DELAY);
+  //  dispatchInputs();
+  lifter->execute();
+  pusher->execute();
+  FastLED.show();
+  FastLED.delay(DELAY);
 }
+
