@@ -48,6 +48,8 @@ class Subsystem {
 
     void Interlace(int size, CRGB *pattern);
     void SetColor(CRGB color);
+    void ShiftForward(CRGB color=0);
+    void ShiftBack(CRGB color=0);
 
   private:
     int actualNumberOfLeds;
@@ -59,8 +61,9 @@ class Command {
   public:
     Command(Subsystem *subsystem, int speed = 1);
     ~Command();
-    virtual void Initialize();
     bool Run();
+    void SetSpeed(int speed) {my_speed=speed;};
+    virtual void Initialize();
     virtual void Execute();
     virtual bool IsFinished();
     virtual void End();
@@ -120,6 +123,20 @@ void Subsystem::Interlace(int size, CRGB *pattern) {
   for (int t = 0; t < actualNumberOfLeds; t++) {
     leds[t] = pattern[t % size];
   }
+}
+
+void Subsystem::ShiftForward(CRGB color) {
+  for (int t = actualNumberOfLeds-1; t > 0; t--) {
+    leds[t] = leds[t-1];
+  }
+  leds[0] = color;
+}
+
+void Subsystem::ShiftBack(CRGB color) {
+  for (int t = 0; t < actualNumberOfLeds-1; t++) {
+    leds[t] = leds[t+1];
+  }
+  leds[actualNumberOfLeds-1] = color;
 }
 
 
@@ -197,65 +214,81 @@ void Chase::Execute() {
 }
 
 bool Chase::IsFinished() {
-  return (cycleNumber >= 2500);
+  return (cycleNumber >= 600);
 }
 
 
+// Blind - quick strob effect in intent to blind all around
+
+class Blind : public Command {
+    const static int SPEED = 1;
+  public:
+    Blind(Subsystem *s): Command(s, SPEED) {};
+
+    void Execute() {
+      if (my_strip != NULL) {
+        my_strip->SetColor(cycleNumber%2 ? CRGB::White : 0);
+      }
+    };
+
+    bool IsFinished() { return (cycleNumber >= 20); };
+};
+
+
+// Breathe - slowly oscillate up and down
+//
+class Breathe : public Command {
+    const static int SPEED = 2;
+    CRGB m_color;
+  public:
+    Breathe(Subsystem *s, CRGB color=CRGB::Green): Command(s, SPEED), m_color(color) {};
+
+    void Execute() {
+      if (my_strip != NULL) {
+        CRGB color = m_color;
+        if(cycleNumber < 256) {
+          uint8_t val = triwave8(cycleNumber);
+          //Serial.print("Breathe: "); Serial.print(val); Serial.print("\n");
+          color %= (val/2);
+        }
+        else color = 0;
+        my_strip->SetColor(color);
+      }
+    };
+
+    bool IsFinished() { return (cycleNumber >= 300); };
+};
 
 
 
 /*
-
-TODO: convert these into classes...
-
-  void Subsystem::blind() {
-  if(done) return;
-  if(cycleNumber%2 == 0) {
-    SetColor(CRGB::White);
-  }
-  else {
-    SetColor(CRGB::Black);
-  }
-  idleCycles = 5;
-  if(cycleNumber++ >= 10) {
-    resetSubsystem();
-    done = true;
-  }
-  }
-
-  void Subsystem::breathe(CRGB color) {
-  static const int upCycles = 50;
-  static const int downCycles = 100;
-  static const int totalCycles = 300;
-  static const float maxPower = 0.5;
-  CRGB calculated = CRGB::Black;
-  float frac = 0.0;
-  if(cycleNumber < upCycles) {
-    frac = maxPower * cycleNumber / upCycles;
-  }
-  else if(cycleNumber < upCycles + downCycles)  {
-    frac = maxPower - (maxPower*( cycleNumber - upCycles) / downCycles);
-  }
-  else if(cycleNumber < totalCycles) {
-    frac = 0;
-  }
-  else {
-    resetSubsystem();
-    done = true;
-    return;
-  }
-  calculated.setRGB(frac*color.r, frac*color.g, frac*color.b);
-  SetColor(calculated);
-  cycleNumber++;
-  }
-*/
-
+ * Here and below is the execution part.
+ * As usual in Arduino: first setup() once and then loop() repeatedly.
+ */
 
 Subsystem *lifter;
 Subsystem *pusher;
 Command *default_lifter;
 Command *default_pusher;
+Command *chaser_p;
+Command *blinder_p;
 
+void dispatchInputs() {
+  while(Serial.available() > 0) {
+    String input = Serial.readString();
+    Serial.print("Serial received: "); Serial.print(input);
+    if(input.startsWith("Chase")) {
+      pusher->SetCurrentCommand(chaser_p);
+      if(isDigit(input.charAt(6))) {
+        int speed = input.substring(6).toInt();
+        chaser_p->SetSpeed(speed);
+      }
+    }
+    else if(input.startsWith("Blind")) {
+      pusher->SetCurrentCommand(blinder_p);
+    }
+  }
+}
 void setup() {
   Serial.begin(9600);
   Serial.print("Initializing...\n");
@@ -266,7 +299,10 @@ void setup() {
   lifter = new Subsystem(NUM_LEDS_LIFTER);
   pusher = new Subsystem(NUM_LEDS_PUSHER);
   default_lifter = new Chase(lifter);
-  default_pusher = new Chase(pusher);
+  default_pusher = new Breathe(pusher);
+
+  chaser_p = new Chase(pusher);
+  blinder_p = new Blind(pusher);
 
   lifter->SetDefaultCommand(default_lifter);
   pusher->SetDefaultCommand(default_pusher);
@@ -277,17 +313,17 @@ void setup() {
   lifter->SetColor(CRGB::Yellow);
   pusher->SetColor(CRGB::Yellow);
   FastLED.show();
-  FastLED.delay(DELAY);
+  FastLED.delay(500);
   lifter->SetColor(CRGB::Black);
   pusher->SetColor(CRGB::Black);
   FastLED.show();
-  FastLED.delay(DELAY);
+  FastLED.delay(1000);
   Serial.print("Init is done. Starting...\n");
 }
 
 
 void loop() {
-  //  dispatchInputs();
+  dispatchInputs();
   lifter->execute();
   pusher->execute();
   FastLED.show();
