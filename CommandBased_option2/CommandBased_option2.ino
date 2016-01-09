@@ -39,7 +39,6 @@ class Command;
 
 class Subsystem {
   public:
-    CRGB* leds;
     Subsystem(int numberOfLeds);
     ~Subsystem();
     void SetDefaultCommand(Command *command);
@@ -50,11 +49,14 @@ class Subsystem {
     void SetColor(CRGB color);
     void ShiftForward(CRGB color=0);
     void ShiftBack(CRGB color=0);
-
+    CRGB &operator[](size_t i) { if(i<0) return leds[0]; else if(i>=m_size) return leds[m_size-1]; else return leds[i]; };
+  protected:
+    CRGB* leds;
   private:
-    int actualNumberOfLeds;
+    size_t m_size;
     Command *default_command;
     Command *current_command;
+  friend void setup();
 };
 
 class Command {
@@ -79,7 +81,7 @@ class Command {
 
 Subsystem::Subsystem(int numberOfLeds) {
   leds = new CRGB[numberOfLeds];
-  actualNumberOfLeds = numberOfLeds;
+  m_size = numberOfLeds;
   default_command = NULL;
   current_command = NULL;
 }
@@ -114,29 +116,29 @@ void Subsystem::execute() {
 
 
 void Subsystem::SetColor(CRGB color) {
-  for (int t = 0; t < actualNumberOfLeds; t++) {
+  for (int t = 0; t < m_size; t++) {
     leds[t] = color;
   }
 }
 
 void Subsystem::Interlace(int size, CRGB *pattern) {
-  for (int t = 0; t < actualNumberOfLeds; t++) {
+  for (int t = 0; t < m_size; t++) {
     leds[t] = pattern[t % size];
   }
 }
 
 void Subsystem::ShiftForward(CRGB color) {
-  for (int t = actualNumberOfLeds-1; t > 0; t--) {
+  for (int t = m_size-1; t > 0; t--) {
     leds[t] = leds[t-1];
   }
   leds[0] = color;
 }
 
 void Subsystem::ShiftBack(CRGB color) {
-  for (int t = 0; t < actualNumberOfLeds-1; t++) {
+  for (int t = 0; t < m_size-1; t++) {
     leds[t] = leds[t+1];
   }
-  leds[actualNumberOfLeds-1] = color;
+  leds[m_size-1] = color;
 }
 
 
@@ -279,7 +281,7 @@ void dispatchInputs() {
     Serial.print("Serial received: "); Serial.print(input);
     if(input.startsWith("Chase")) {
       pusher->SetCurrentCommand(chaser_p);
-      if(isDigit(input.charAt(6))) {
+      if(isDigit(input.charAt(6)) or input.charAt(6)=='-') {
         int speed = input.substring(6).toInt();
         chaser_p->SetSpeed(speed);
       }
