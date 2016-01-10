@@ -9,8 +9,8 @@
 
 #include <FastLED.h>
 
-#define NUM_LEDS_PUSHER 32
-#define NUM_LEDS_LIFTER 32
+#define NUM_LEDS_PUSHER 64
+#define NUM_LEDS_LIFTER 64
 
 #define DATA_PIN_PUSHER 4
 #define DATA_PIN_LIFTER 3
@@ -50,6 +50,7 @@ class Subsystem {
     void ShiftForward(CRGB color=0);
     void ShiftBack(CRGB color=0);
     CRGB &operator[](size_t i) { if(i<0) return leds[0]; else if(i>=m_size) return leds[m_size-1]; else return leds[i]; };
+    size_t size() {return m_size;};
   protected:
     CRGB* leds;
   private:
@@ -262,6 +263,34 @@ class Breathe : public Command {
 };
 
 
+// RainbowBreathe - slowly oscillate back and forth
+//
+class RainbowBreathe : public Command {
+    const static int SPEED = 2;
+    uint8_t m_hue;
+    int step;
+  public:
+    RainbowBreathe(Subsystem *s, uint8_t hue=0): Command(s, SPEED), m_hue(hue) {step=256/s->size();};
+
+    void Execute() {
+      if (my_strip != NULL) {
+        CHSV color;
+        if(cycleNumber < 256) {
+          uint8_t val = triwave8(cycleNumber);
+          //Serial.print("Breathe: "); Serial.print(val); Serial.print("\n");
+	  color.h = (m_hue + cycleNumber*step)%256;
+	  color.s = 255;
+          color.v = val/2;
+        }
+        else color.v = 0;
+        my_strip->ShiftForward(color);
+      }
+    };
+
+    bool IsFinished() { return (cycleNumber >= 300); };
+};
+
+
 
 /*
  * Here and below is the execution part.
@@ -291,6 +320,8 @@ void dispatchInputs() {
     }
   }
 }
+
+
 void setup() {
   Serial.begin(9600);
   Serial.print("Initializing...\n");
@@ -301,7 +332,7 @@ void setup() {
   lifter = new Subsystem(NUM_LEDS_LIFTER);
   pusher = new Subsystem(NUM_LEDS_PUSHER);
   default_lifter = new Chase(lifter);
-  default_pusher = new Breathe(pusher);
+  default_pusher = new RainbowBreathe(pusher);
 
   chaser_p = new Chase(pusher);
   blinder_p = new Blind(pusher);
