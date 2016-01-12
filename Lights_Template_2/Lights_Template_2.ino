@@ -61,8 +61,8 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   void setColorFrom(CRGB color, int low, int high); //Sets the a part of a light strip to one color
   void setColorUp(CRGB color); //Sets the light strip to one color going up from the bottom. Occurs over several system.run's
   void setColorDown(CRGB color);//Sets the light strip to one color going down from the top . Occurs over several system.runs's
-  void moveUp(int moveTimes); // Moves every LED bulb color up one.
-  void moveDown(int moveTimes); //Moves every LED bulb color down one.
+  void moveUp(int moveTimes, int color); // Moves every LED bulb color up one.
+  void moveDown(int moveTimes, int color); //Moves every LED bulb color down one.
   void moveUpOnly(int low, int high); //Moves up the LED bulb colors from a range up.
   void moveDownOnly(int low, int high); //Moves up the LED bulb colors from a ranage down.
   void alternateColor(CRGB color1, CRGB color2);// Makes the lights alternate between two colors
@@ -288,7 +288,6 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     break;
     
     case 6:
-    moveUp(10);
     break;
     
     case 7:
@@ -448,7 +447,6 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     break;
     
     case 6:
-    moveUp(10);
     break;
     
     case 7:
@@ -646,7 +644,7 @@ void Subsystem::setColor(CRGB color){
   }
   
   
-  void Subsystem::moveUp(int moveTimes){
+void Subsystem::moveUp(int moveTimes, int color){
     if(moveTimes > runTimer){
    for(timer = actualNumberOfLeds-1; timer >= 0; timer--){
      /*
@@ -655,7 +653,7 @@ void Subsystem::setColor(CRGB color){
        leds[timer] = CRGB::Black; 
      }*/
      leds[timer+1] = leds[timer];
-     leds[timer] = CRGB::Black;
+     leds[timer] = color;
      
    }
   FastLED.show();
@@ -666,14 +664,13 @@ void Subsystem::setColor(CRGB color){
     }
   }
   
-  
-  void Subsystem::moveDown(int moveTimes){
+  void Subsystem::moveDown(int moveTimes,int color){
      if(moveTimes > runTimer){
     for(timer = 0; timer<actualNumberOfLeds; timer++){
-     if(timer=! 0){
+     
       leds[timer-1] = leds[timer];
-      leds[timer] = CRGB::Black;
-     } 
+      leds[timer] = color;
+      
     }
    FastLED.show();
      runTimer++;
