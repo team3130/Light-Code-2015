@@ -11,7 +11,9 @@
 #define DATA_PIN_1 2  //Says which data pin to use for LED  strip 1
 #define DATA_PIN_2 3
 
-
+CRGB blaple = CRGB(76,69,88); 
+CRGB bluish = CRGB(10,50,250);
+CRGB orangeFruit = CRGB(254,40,40);
 int RNGTimer = 0;
 CRGB randomColor(){      //Custom color option that gives a seemingly random color.
   switch(RNGTimer%6){
@@ -58,6 +60,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   Subsystem(int numberOfLeds,int updateChooser, int serialLessUpdateChooser, int delayTime, bool serialBased);
  
   void setColor(CRGB color);  //Sets the entire light strip to one color
+  void invertColor();
   void setColorFrom(CRGB color, int low, int high); //Sets the a part of a light strip to one color
   void setColorUp(CRGB color); //Sets the light strip to one color going up from the bottom. Occurs over several system.run's
   void setColorDown(CRGB color);//Sets the light strip to one color going down from the top . Occurs over several system.runs's
@@ -68,7 +71,11 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   void alternateColor(CRGB color1, CRGB color2);// Makes the lights alternate between two colors
   void rippleCRGB(CRGB color, int rippleRate, int positionStart, int duration);//Makes the LEDs ripple from one LED to all others while also lowering each RGB value from one LED to the next.
   void rippleCHSV(CHSV color, int rippleRate, int positionStart, int duration, int HSV);//Makes the LEDs ripple from one LED to all others while also lowering each HSV of choice value from one LED to the next. (0=Hue, 1=Saturation, 2=value)
-  
+  void redFade(int runTimes);   //Adds red hue to all of a light strip
+  void blueFade(int runTimes);  //Adds blue hue to all of a light strip
+  void greenFade(int runTimes);  //Adds green hue to all of a light strip
+  void brighten(CRGB color, int amount);
+  void sparkle(CRGB color, int runTimes);
   
   void resetSubsystem(); //Wipes everything in the system to the starting settings.
   void resetTimers();//Wipes only the timers in the system.
@@ -79,13 +86,15 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   
   int getDelay();//Returns how much delay the subsystem should run.
   int getTaskState();//Returns the current task state of the subsystem.
-  
+  bool colorMatch(CRGB color);//Checks if the array is near a color.
+
   
   
   CRGB leds[64];              //Light Array. Set to 64 due to some oddities.
   
     int taskState = 0;
-
+    int cycleSpeed = 1;      //Beta Overhaul
+    int runProgress = 0;
 
   private:
   
@@ -109,6 +118,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   int runTimer = 0;
   int miscTimer = 0;
   int ascentTimer = 1;
+  int colorTimer = 0;
   int impartialTimeKeeper = 0;
   int impartialForLoopKeeper = 0;
   
@@ -140,12 +150,31 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
 ///////
 ///////
 ///////
-
+bool Subsystem::colorMatch(CRGB color){
+   for(colorTimer = 0; colorTimer < actualNumberOfLeds; colorTimer++){
+    if(leds[colorTimer].r == color.r || abs(leds[colorTimer].r-color.r) <= 10){
+      if(leds[colorTimer].g == color.g || abs(leds[colorTimer].g-color.g) <= 10){
+      if(leds[colorTimer].b == color.b || abs(leds[colorTimer].b-color.b) <= 10){
+       
+    }else{
+      return false;
+    }
+    }else{
+      return false;
+    }
+    }else{
+      return false; 
+    }
+   }
+ return true; 
+}
 
 void Subsystem::resetSubsystem(){
-   taskState = 0;                    //Just wipe the daylights out of everything
+  cycleSpeed =1; 
+  taskState = 0;                    //Just wipe the daylights out of everything
     setColor(CRGB::Black);
         resetTimers();
+        completelyDone = false;
 
 }
 
@@ -237,6 +266,8 @@ taskState++; //Move onto the next task for the system
 ///
 void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function used to run the subsystem
   for(miscTimer = 0; miscTimer < runTimes; miscTimer++){    //Only important of you run a subsystem many times. Used generally for startup and weird things
+  if(runProgress == cycleSpeed){ 
+    runProgress = 0;
   if(isSerialBased){
     override();      //if the function runs on serial make sure no emergency inputs are coming
     
@@ -555,6 +586,8 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
   }
   
 }
+runProgress++;
+}
 ///////
 ///////
 ///////
@@ -746,6 +779,93 @@ void Subsystem::moveUp(int moveTimes, int color){
   
  }
 
+void Subsystem::redFade(int runTimes){
+    if(timer< runTimes){
+      for(miscTimer = 0; miscTimer < actualNumberOfLeds; miscTimer++){
+       leds[miscTimer].r ++; 
+      }
+      timer++;
+    }else{
+     done = true; 
+    }
+  }
+  
+  void Subsystem::blueFade(int runTimes){
+    if(timer< runTimes){
+      for(miscTimer = 0; miscTimer < actualNumberOfLeds; miscTimer++){
+       leds[miscTimer].b ++; 
+      }
+      timer++;
+    }else{
+     done = true; 
+    }
+  }
+  
+  void Subsystem::greenFade(int runTimes){
+    if(timer< runTimes){
+      for(miscTimer = 0; miscTimer < actualNumberOfLeds; miscTimer++){
+       leds[miscTimer].g ++; 
+      }
+      timer++;
+    }else{
+     done = true; 
+    }
+  }
+  
+  void Subsystem::brighten(CRGB color, int amount){
+    if(!colorMatch(color)){
+      for(timer = 0; timer < actualNumberOfLeds; timer++){
+        
+        if(leds[timer].r != color.r){ 
+      if(leds[timer].r < color.r){
+        leds[timer].r += amount;
+       }else{
+        leds[timer].r -= amount;
+       } 
+        }
+        
+        if(leds[timer].g != color.g){
+       if(leds[timer].g <= color.g){
+        leds[timer].g += amount;
+       }else{
+        leds[timer].g -= amount;
+       }
+        }
+      
+      if(leds[timer].b != color.b){
+      if(leds[timer].b <= color.b){
+        leds[timer].b += amount;
+       }else{
+        leds[timer].b -= amount;
+       } 
+      }
+      
+      }
+    }else{
+     done = true; //WEEEE MADE ITTTTT
+    }
+  }
+
+  void Subsystem::invertColor(){
+   for(timer = 0; timer < actualNumberOfLeds; timer++){
+    leds[timer] = -leds[timer]; 
+   }
+   done = true;
+  }
+  
+  void Subsystem::sparkle(CRGB color,int runTimes){
+   if(runTimes > runTimer){
+     for(timer =0; timer< actualNumberOfLeds; timer++){
+      leds[timer]= CRGB::Black;
+      
+     }
+    leds[random8(actualNumberOfLeds-1)] = color;
+     
+     runTimer++;
+   }else{
+    done = true;
+   } 
+  }
 
 
 
