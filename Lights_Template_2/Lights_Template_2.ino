@@ -66,6 +66,8 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   void moveUpOnly(int low, int high); //Moves up the LED bulb colors from a range up.
   void moveDownOnly(int low, int high); //Moves up the LED bulb colors from a ranage down.
   void alternateColor(CRGB color1, CRGB color2);// Makes the lights alternate between two colors
+  void rippleCRGB(CRGB color, int rippleRate, int positionStart, int duration);//Makes the LEDs ripple from one LED to all others while also lowering each RGB value from one LED to the next.
+  void rippleCHSV(CHSV color, int rippleRate, int positionStart, int duration, int HSV);//Makes the LEDs ripple from one LED to all others while also lowering each HSV of choice value from one LED to the next. (0=Hue, 1=Saturation, 2=value)
   
   
   void resetSubsystem(); //Wipes everything in the system to the starting settings.
@@ -99,6 +101,9 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   int systemDelayTime = 0;//used to save the delay for the system
   int forloopthingy = 0;//used as a timer for strange for loop things
   int functionStep = 0;//used to keep track of where strange functions are
+  int newcolorR = 0;//Sets new color for R in the function ripple equal to 0
+  int newcolorG = 0;//Sets new color for G in the function ripple equal to 0
+  int newcolorB = 0;//Sets new color for B in the function ripple equal to 0
   
   int timer = 0;
   int runTimer = 0;
@@ -253,23 +258,8 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
   }else{
     if(_serialLessUpdateChooser ==1){    //Update choosing point for non-serial functions
    switch(taskState){
-    case -5:
-     break; 
-     
-     case -4:
-     break;
-     
-     case -3:
-     break;
-     
-      case -2:
-     break;
-     
-      case -1:
-     break;
-     
       case 0:
-     break;
+      break;
      
      case 1:
      break;
@@ -284,7 +274,6 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     break;
     
     case 5:
-    
     break;
     
     case 6:
@@ -335,6 +324,7 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     case 19:
     
     break;
+
     case 20:
     break;
     
@@ -412,26 +402,12 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     } 
     if(_serialLessUpdateChooser==2){  //second set of commands to run in the event you want two serialess subsystems
       switch(taskState){
-    case -5:
-     break; 
+    
+    case 0:
+    break;
      
-     case -4:
-     break;
-     
-     case -3:
-     break;
-     
-      case -2:
-     break;
-     
-      case -1:
-     break;
-     
-      case 0:
-     break;
-     
-     case 1:
-     break;
+    case 1:
+    break;
      
     case 2:
     break;
@@ -443,10 +419,9 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     break;
     
     case 5:
-    
     break;
     
-    case 6:
+    case 6:   
     break;
     
     case 7:
@@ -716,9 +691,62 @@ void Subsystem::moveUp(int moveTimes, int color){
     done = true;
   }
   
- 
+ void Subsystem::rippleCRGB(CRGB color, int rippleRate, int positionStart, int duration){       //Definition for rippleCRGB command that takes in a CRGB color, an int for that rate at which the RGB values change, an int for which LED to start the rippleCRGB at, and an int for how many other LEDS(1 = 1 up and 1 down) the affect goes to.  It also sets the default incase no value is put in. 
+    if(timer<=duration){                                             //Checks to see if the timer is still lower than the duration time passed.
+      leds[positionStart] = color;                                    //Sets the color of the position put in to the color that was put in.      
+      newcolorR = leds[positionStart+timer-1].r - rippleRate;         //Sets newcolorR equal to the r value of the LED before it minus the ripple rate of change passed.
+      newcolorG = leds[positionStart+timer-1].g - rippleRate;         //Sets newcolorG equal to the G value of the LED before it minus the ripple rate of change passed.
+      newcolorB = leds[positionStart+timer-1].b - rippleRate;         //Sets newcolorB equal to the B value of the LED before it minus the ripple rate of change passed.
+      if(newcolorR<=0 or newcolorR>255){                             //Ifs used to make sure that the RGB values stay within 0 and 255 so some form of a color is displayed
+        newcolorR = leds[positionStart+timer-1].r + rippleRate;       //And if the value goes outside this range, the RGB value gets reset to the value of the LED before it 
+      }
+      if(newcolorG<=0 or newcolorG>255){
+        newcolorG = leds[positionStart+timer-1].g + rippleRate;       
+      }                                                               
+      if(newcolorB<=0 or newcolorB>255){                             
+        newcolorB = leds[positionStart+timer-1].b + rippleRate;       
+      }
+                                                                     
+      leds[positionStart+timer].r = newcolorR;                        //Sets the next set of LEDs (one above, one below) to the newcolor for its respective RGB values 
+      leds[positionStart+timer].g = newcolorG;
+      leds[positionStart+timer].b = newcolorB;
+      leds[positionStart-timer].r = newcolorR;
+      leds[positionStart-timer].g = newcolorG;
+      leds[positionStart-timer].b = newcolorB;  
+      timer++;                                                        //Increments the timer by one
+    }
+    else{                                                             //If the duration is done, then done is set to true ending the cycle. 
+      done = true; 
+    }
+  
+ }
   
   
+
+ void Subsystem::rippleCHSV(CHSV color, int rippleRate, int positionStart, int duration, int HSV){
+    if(timer<=duration){                                             //Checks to see if the timer is still lower than the duration time passed.
+      leds[positionStart] = color;                                    //Sets the color of the position put in to the color that was put in.
+      if(HSV==0){
+         leds[positionStart+timer] = CHSV(color.hue - timer*rippleRate, color.sat, color.val);          //Sets the next set of LEDs (one above, one below) to the newcolor for its respective HSV values
+         leds[positionStart-timer] = CHSV(color.hue - timer*rippleRate, color.sat, color.val);      
+      }
+      if(HSV==1){
+         leds[positionStart+timer] = CHSV(color.hue, color.sat - timer*rippleRate, color.val);          //Sets the next set of LEDs (one above, one below) to the newcolor for its respective HSV values
+         leds[positionStart-timer] = CHSV(color.hue, color.sat - timer*rippleRate, color.val);      
+      }      
+      if(HSV==2){
+         leds[positionStart+timer] = CHSV(color.hue, color.sat, color.val - timer*rippleRate);          //Sets the next set of LEDs (one above, one below) to the newcolor for its respective HSV values
+         leds[positionStart-timer] = CHSV(color.hue, color.sat, color.val - timer*rippleRate);      
+      } 
+      timer++;                                                        //Increments the timer by one
+    }
+    else{                                                             //If the duration is done, then done is set to true ending the cycle. 
+      done = true; 
+    }
+  
+ }
+
+
 
 
 
