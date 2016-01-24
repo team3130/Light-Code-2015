@@ -1,3 +1,12 @@
+//Fix sync... probably accept the input straight from the second subsystem.
+//Scratch that thats impossible. Cannot refernce systems that don't yet exist in system commands
+//Need CRGB array middeground floating somewhere
+//Need to get synced back to working.
+//Need to run sync everytime assuming subsystem is synced
+//Make sure subsystems run in order so that the right things override each other
+//need to make sure things desync properly
+
+
 //DO NOT USE Port 13. Really. There are plenty of other ports. Don't do it.
 //Code designed to run WS2811 LEDS and NEOPIXELs
 //This runs on a custom built multitasker for light strips. It is designed
@@ -11,6 +20,7 @@
 #define DATA_PIN_1 2  //Says which data pin to use for LED  strip 1
 #define DATA_PIN_2 3
 
+CRGB lame = CRGB(20,20,20);
 CRGB blaple = CRGB(76,69,88); 
 CRGB bluish = CRGB(10,50,250);
 CRGB orangeFruit = CRGB(254,40,40);
@@ -57,13 +67,13 @@ CRGB randomColor(){      //Custom color option that gives a seemingly random col
 class Subsystem  //Class that allows for multitasking lights. Made to be flexible.
 {
   public:
-  Subsystem(int numberOfLeds,int updateChooser, int serialLessUpdateChooser, int delayTime, bool serialBased);
+  Subsystem(int numberOfLeds,int updateChooser, int serialLessUpdateChooser, int delayTime, bool serialBased, bool synced);
  
   void setColor(CRGB color);  //Sets the entire light strip to one color
   void invertColor();
   void setColorFrom(CRGB color, int low, int high); //Sets the a part of a light strip to one color
-  void setColorUp(CRGB color); //Sets the light strip to one color going up from the bottom. Occurs over several system.run's
-  void setColorDown(CRGB color);//Sets the light strip to one color going down from the top . Occurs over several system.runs's
+  void setColorUp(CRGB color, int low, int high); //Sets the light strip to one color going up from the bottom. Occurs over several system.run's
+  void setColorDown(CRGB color, int low, int high);//Sets the light strip to one color going down from the top . Occurs over several system.runs's
   void moveUp(int moveTimes, int color); // Moves every LED bulb color up one.
   void moveDown(int moveTimes, int color); //Moves every LED bulb color down one.
   void moveUpOnly(int low, int high); //Moves up the LED bulb colors from a range up.
@@ -74,8 +84,8 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   void redFade(int runTimes);   //Adds red hue to all of a light strip
   void blueFade(int runTimes);  //Adds blue hue to all of a light strip
   void greenFade(int runTimes);  //Adds green hue to all of a light strip
-  void brighten(CRGB color, int amount);
-  void sparkle(CRGB color, int runTimes);
+  void brighten(CRGB color, int amount, int low, int high);
+  void sparkle(CRGB color, int runTimes,bool replaceing);
   
   void resetSubsystem(); //Wipes everything in the system to the starting settings.
   void resetTimers();//Wipes only the timers in the system.
@@ -83,19 +93,31 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   void runSystem(int runTimes, bool autoDelay);//Runs the system once.
   void updateTask();//Updates the systems task when a system is done running.
   
-  
   int getDelay();//Returns how much delay the subsystem should run.
   int getTaskState();//Returns the current task state of the subsystem.
-  bool colorMatch(CRGB color);//Checks if the array is near a color.
+  bool colorMatch(CRGB color, int low, int high);//Checks if the array is near a color.
 
   
   
-  CRGB leds[64];              //Light Array. Set to 64 due to some oddities.
-  
-    int taskState = 0;
-    int cycleSpeed = 1;      //Beta Overhaul
-    int runProgress = 0;
+  CRGB leds[64];       //Light Array. Set to 64 due to some oddities.
+  bool compare[64];
+    short taskState = 0;
+    short cycleSpeed = 1;      //Beta Overhaul
+    short runProgress = 0;
+    
+    int returnLEDAmount();
+    void desynced();
+    
+          bool returnSyncStatus();
+          void synced();
+          void sync(CRGB middleGround[], bool from);
+          
+     short syncTimer = 0;
+      bool syncMiscCheck = false;
 
+
+    
+    
   private:
   
   bool isSerialBased;      //Boolean used to tell if the subsystem is serial based.
@@ -122,22 +144,78 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   int impartialTimeKeeper = 0;
   int impartialForLoopKeeper = 0;
   
+  int syncPoint = 0;
+  bool syncedUp = false;
+  bool syncedForNextStep =false;
+
+  
   char serialValue = Serial.read();
+  
+  
   
   
 };
   //Saves all of the subsystem inputs to more permenant variables for future uses.
- Subsystem::Subsystem(int numberOfLeds, int updateChooser, int serialLessUpdateChooser, int delayTime, bool serialBased){
+ Subsystem::Subsystem(int numberOfLeds, int updateChooser, int serialLessUpdateChooser, int delayTime, bool serialBased, bool synced){
    
    actualNumberOfLeds = numberOfLeds;
    _updateChooser = updateChooser;
    _serialLessUpdateChooser = serialLessUpdateChooser;
    isSerialBased = serialBased;
    systemDelayTime = delayTime;
-   
+   syncedUp =synced;
    
    
   
+}
+
+void Subsystem::sync(CRGB middleGround[], bool from){
+    if(!miscCheck){      //To avoid setting nulls = to nulls and crashing. boom.
+      for(syncTimer = 0; syncTimer< actualNumberOfLeds; syncTimer++){
+       middleGround[syncTimer] = CRGB::Black;
+             leds[syncTimer] = CRGB::Black; 
+ 
+      }
+      miscCheck = true;
+  }
+  if(from){
+  for(syncTimer = 0; syncTimer < actualNumberOfLeds; syncTimer++){
+    leds[syncTimer] = middleGround[syncTimer];
+    
+  }
+  }
+  
+  if(!from){
+    for(syncTimer = 0; syncTimer < actualNumberOfLeds; syncTimer++){
+    middleGround[syncTimer] = leds[syncTimer];
+    
+  }
+  }
+  
+}
+
+
+
+int Subsystem::returnLEDAmount(){
+ return actualNumberOfLeds; 
+}
+
+
+
+void Subsystem::desynced(){        //Say whether or not the system is synced with another system
+ syncedForNextStep = false; 
+}
+
+void Subsystem::synced(){
+ if(done){
+  syncedForNextStep = true;
+ } 
+}
+
+
+
+bool Subsystem::returnSyncStatus(){
+ return syncedForNextStep; 
 }
 ///////
 ///////
@@ -150,8 +228,8 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
 ///////
 ///////
 ///////
-bool Subsystem::colorMatch(CRGB color){
-   for(colorTimer = 0; colorTimer < actualNumberOfLeds; colorTimer++){
+bool Subsystem::colorMatch(CRGB color,int low, int high){
+   for(colorTimer = low; colorTimer < high; colorTimer++){
     if(leds[colorTimer].r == color.r || abs(leds[colorTimer].r-color.r) <= 10){
       if(leds[colorTimer].g == color.g || abs(leds[colorTimer].g-color.g) <= 10){
       if(leds[colorTimer].b == color.b || abs(leds[colorTimer].b-color.b) <= 10){
@@ -172,9 +250,9 @@ bool Subsystem::colorMatch(CRGB color){
 void Subsystem::resetSubsystem(){
   cycleSpeed =1; 
   taskState = 0;                    //Just wipe the daylights out of everything
-    setColor(CRGB::Black);
         resetTimers();
         completelyDone = false;
+        done = false;
 
 }
 
@@ -241,8 +319,11 @@ resetTimers();
 }else{                //If the subsystem is not serial based
                         //Consider serialess things run dumb they have no reason to break off. They just go up and down the steps.
 if(completelyDone){    //If all tasks are done startover. 
- taskState = 0;        //Anything below zero is one time start up stuff.
+ 
+ taskState = 0; //Anything below zero is one time start up stuff.
+  resetSubsystem();
 }
+
 taskState++; //Move onto the next task for the system
 
 
@@ -266,8 +347,10 @@ taskState++; //Move onto the next task for the system
 ///
 void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function used to run the subsystem
   for(miscTimer = 0; miscTimer < runTimes; miscTimer++){    //Only important of you run a subsystem many times. Used generally for startup and weird things
+  if(!syncedUp or !syncedForNextStep){
   if(runProgress == cycleSpeed){ 
     runProgress = 0;
+    
   if(isSerialBased){
     override();      //if the function runs on serial make sure no emergency inputs are coming
     
@@ -290,27 +373,42 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     if(_serialLessUpdateChooser ==1){    //Update choosing point for non-serial functions
    switch(taskState){
       case 0:
-      break;
-     
+break;
+       
      case 1:
-     break;
      
-    case 2:
-    break;
+
+
+break;
+      case 2:
+break;
     
     case 3:
+
+    
+      
     break;
     
     case 4:
+
+                              //Sync 1
+
+    
+    
     break;
     
     case 5:
+                //Sync 2
     break;
     
     case 6:
+
+
+          
     break;
     
     case 7:
+                           //Sync 3
     break;
     
     case 8:
@@ -425,6 +523,7 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     
     case 38:
     completelyDone = true;
+    done = true;
     break;
     
     default:
@@ -438,12 +537,15 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     break;
      
     case 1:
+
     break;
      
     case 2:
+
     break;
     
     case 3:
+
     break;
     
     case 4:
@@ -575,6 +677,67 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     break;
    }
     }
+    if(_serialLessUpdateChooser==3){
+     switch(taskState){
+       case 0:
+          break;
+      case 1:
+            break;
+      
+      case 2:
+      break;
+      
+      case 3:
+
+    break;
+    
+    case 4:
+
+
+        
+    break;
+    
+    case 5:
+    break;
+    
+    case 6:   
+    break;
+    
+    case 7:
+    break;
+    
+    case 8:
+    
+    
+    break;
+    
+    case 9:
+    break;
+    
+    case 10:
+    break;
+    case 11:
+     
+    break;
+    
+    case 12:
+     
+    break;
+    
+    
+    break;
+    
+    case 14:
+    
+    break;
+    
+    case 15:
+    completelyDone = true;
+    done = true;
+    break;
+    
+     } 
+    }
   }
    
     
@@ -587,6 +750,7 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
   
 }
 runProgress++;
+  }
 }
 ///////
 ///////
@@ -627,9 +791,12 @@ void Subsystem::setColor(CRGB color){
   }
   
   
-  void Subsystem::setColorUp(CRGB color){      //Sets color going from bot to top
-    
-    if(timer <=actualNumberOfLeds){
+  void Subsystem::setColorUp(CRGB color, int low, int high){      //Sets color going from bot to top
+    if(!miscCheck){
+     timer = low;
+    miscCheck = true; 
+    }
+    if(timer <=high){
      leds[timer] = color;
     timer++; 
     }else{
@@ -638,12 +805,12 @@ void Subsystem::setColor(CRGB color){
   }
   
   
-  void Subsystem::setColorDown(CRGB color){    //Sets color going for top to bot
+  void Subsystem::setColorDown(CRGB color, int low, int high){    //Sets color going for top to bot
     if(!miscCheck){
      miscCheck = true;                          //Due to the nature of resetTimers() for functions that start at the top I need this one time run thingamajig to set the top as where to start and not zero
-    timer = actualNumberOfLeds; 
+    timer = high; 
     }
-    if(timer >= 0){
+    if(timer >= low){
      leds[timer] = color;
     timer--; 
     }else{
@@ -812,9 +979,9 @@ void Subsystem::redFade(int runTimes){
     }
   }
   
-  void Subsystem::brighten(CRGB color, int amount){
-    if(!colorMatch(color)){
-      for(timer = 0; timer < actualNumberOfLeds; timer++){
+  void Subsystem::brighten(CRGB color, int amount, int low, int high){
+    if(!colorMatch(color, low, high)){
+      for(timer = low; timer < high; timer++){
         
         if(leds[timer].r != color.r){ 
       if(leds[timer].r < color.r){
@@ -853,21 +1020,141 @@ void Subsystem::redFade(int runTimes){
    done = true;
   }
   
-  void Subsystem::sparkle(CRGB color,int runTimes){
+  void Subsystem::sparkle(CRGB color,int runTimes, bool replaceing){
    if(runTimes > runTimer){
-     for(timer =0; timer< actualNumberOfLeds; timer++){
+     if(replaceing){
+       for(timer =0; timer< actualNumberOfLeds; timer++){
       leds[timer]= CRGB::Black;
-      
+       }
      }
-    leds[random8(actualNumberOfLeds-1)] = color;
+    leds[random8(actualNumberOfLeds)] = color;
      
      runTimer++;
    }else{
     done = true;
    } 
   }
+////
+  ///
+  ////
+  ////
+  ////
+  ////
+  ////
+  ////
+  //
+  ////
+  ////
+  ////
+  ////
+  //
+  ////
+  ////
+  ////
+  ////
+  
+  class Synchronizer        //For real. Really.
+  {
+   public:
+   Synchronizer(int ledAmount);
+    CRGB leds[64];        //The middleground array...that sorceries
+    void runSystem(CRGB lightArray1[], bool from);
+    bool miscCheck = false;
+    int syncTimer = 0;
+    
+    private:
+    int numberOfLeds;
+  };
+  
+  Synchronizer::Synchronizer(int ledAmount){
+    numberOfLeds = ledAmount;
+  }
+  
+ void Synchronizer::runSystem(CRGB lightArray1[],bool from){
+   if(!miscCheck){      //To avoid setting nulls = to nulls and crashing. boom.
+      for(syncTimer = 0; syncTimer< numberOfLeds; syncTimer++){
+       leds[syncTimer] = CRGB::Black;
+             lightArray1[syncTimer] = CRGB::Black; 
+ 
+      }
+      miscCheck = true;
+  }
+  
+  
+  if(from){
+  for(syncTimer = 0; syncTimer < numberOfLeds; syncTimer++){
+    lightArray1[syncTimer] = leds[syncTimer];
+    
+  }
+  }
+  
+  if(!from){
+    for(syncTimer = 0; syncTimer < numberOfLeds; syncTimer++){
+    leds[syncTimer] = lightArray1[syncTimer];
+    
+  }
+  }
+   
+ }
+ 
+ 
+  
+/*class Synchronizer
+{
+  public:
+  Synchronizer(Subsystem system1, Subsystem system2);
+  void execute();
+
+  private:
+  Subsystem* primarySystem;
+  Subsystem* secondarySystem;
+  
+  void sync(Subsystem* sync1, Subsystem* sync2);
+  void resetTimers();
+  
+  
+  int syncTimer = 0;
+  int miscCheck = false;
+  
+};
+
+Synchronizer::Synchronizer(Subsystem system1, Subsystem system2){
+  
+  primarySystem = &system1;
+  secondarySystem = &system2;
+  
+}
+
+void Synchronizer::execute(){
+
+  sync(primarySystem, secondarySystem);  //Set secondary equal to primary
+    
+     if(!(secondarySystem->returnSyncStatus())){ 
+
+   secondarySystem->runSystem(1,false);   //Edit lights
+   secondarySystem->upSync();
+     }
+     
+   sync(secondarySystem, primarySystem); //Set primary back to modified
+   
+   if(!(primarySystem->returnSyncStatus())){
+     primarySystem->runSystem(1,false);     //Edit lights
+   primarySystem->upSync();
+   }
+   //primarySystem->runSystem(1,false);
+   
+   if((secondarySystem->returnSyncStatus())&&(primarySystem->returnSyncStatus())){
+     secondarySystem->desynced();
+     primarySystem->desynced();
+   }
+}
 
 
+
+void Synchronizer::resetTimers(){
+  syncTimer = 0;
+}
+*/
 
 
 ///////
@@ -875,11 +1162,23 @@ void Subsystem::redFade(int runTimes){
 ///////
 ///////
 ///////
+//
+  ////
+  ////
+  ////
+  ////
+  //
+  ////
+  ////
+  ////
+  ////
 
 
+Subsystem lightSystem1(NUM_LEDS_1,1,1,25,false,true);
+Subsystem lightSystem2(NUM_LEDS_2,1,2,25,false,false);
+Subsystem syncSystem1(NUM_LEDS_1,1,3,25,false,true);
+Synchronizer lightSet1(NUM_LEDS_1);
 
-Subsystem lightSystem1(NUM_LEDS_1,1,1,500,false);
-Subsystem lightSystem2(NUM_LEDS_2,1,2,500,false);
 
 
 /////
@@ -897,7 +1196,7 @@ Subsystem lightSystem2(NUM_LEDS_2,1,2,500,false);
 void setup(){
 pinMode(DATA_PIN_1,OUTPUT);
 
-  FastLED.addLeds<WS2811, DATA_PIN_1>(lightSystem1.leds,NUM_LEDS_1);
+  FastLED.addLeds<WS2811, DATA_PIN_1, GRB>(lightSet1.leds,NUM_LEDS_1);
   FastLED.addLeds<NEOPIXEL, DATA_PIN_2>(lightSystem2.leds,NUM_LEDS_2);
  Serial.begin(9600);
  
@@ -912,11 +1211,11 @@ pinMode(DATA_PIN_1,OUTPUT);
  
 
 
-lightSystem1.resetSubsystem(); //Clears everything
+/*lightSystem1.resetSubsystem(); //Clears everything
 lightSystem2.resetSubsystem();
 lightSystem1.setColor(CRGB::Black);  //^^
 lightSystem2.setColor(CRGB::Black);  //Yey....this should be part of ^^
-
+*/
 }
 
 
@@ -962,15 +1261,28 @@ lightSystem2.setColor(CRGB::Black);  //Yey....this should be part of ^^
 
 void loop(){
     RNGTimer++;
-   lightSystem1.runSystem(1, false);
-   lightSystem2.runSystem(1, false);
+    lightSystem1.runSystem(1,false);
+    lightSet1.runSystem(lightSystem1.leds,false);
+    lightSet1.runSystem(syncSystem1.leds,true);
+   syncSystem1.runSystem(1, false);
+    lightSet1.runSystem(syncSystem1.leds,false);
+    lightSet1.runSystem(lightSystem1.leds,true);
+    lightSystem2.runSystem(1,false);
+    
+     
    FastLED.show();
+  if(lightSystem1.returnSyncStatus() && syncSystem1.returnSyncStatus()){
+     lightSystem1.desynced();
+    syncSystem1.desynced(); 
+  }
   
-  if(lightSystem1.getTaskState() > 0 or lightSystem2.getTaskState() > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
+  if(lightSystem1.getTaskState() > 0 or lightSystem2.getTaskState() > 0 or syncSystem1.getTaskState() > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
    
      delay((lightSystem1.getDelay() + lightSystem2.getDelay())/2); //Delay extra if running an override as most overrides shouldn't update fast.
     
 }
+
+  
 
  
   }
