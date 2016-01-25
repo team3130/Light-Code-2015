@@ -27,9 +27,9 @@ class Subsystem {
 
 class Command {
   public:
-    Command(Subsystem *subsystem, int speed = 1);
+    Command(Subsystem *subsystem, int speed = 0);
     ~Command();
-    bool Run();
+    virtual bool Run();
     void SetSpeed(int speed) {my_speed=speed;};
     virtual void Initialize();
     virtual void Execute() = 0;
@@ -40,5 +40,25 @@ class Command {
     int cycleNumber = 0;
     int idleCycles = 0;
     int my_speed = 1;
+};
+
+struct CommandContainer {
+	Command* command;
+	CommandContainer* next;
+};
+
+class CommandGroup : public Command {
+public:
+  CommandGroup(Subsystem *subsystem, int speed = 0);
+  ~CommandGroup();
+  bool Run();
+  virtual void Initialize();
+  virtual void Execute() {};
+  virtual bool IsFinished() {return false;};
+  virtual void End();
+  void AddSequential(Command *command); 
+protected:
+  CommandContainer *m_root;
+  CommandContainer *m_iterator;
 };
 

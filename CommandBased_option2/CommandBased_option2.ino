@@ -28,7 +28,7 @@
 
 class Chase : public Command {
     const static int CHASE_SIZE = 5;
-    const static int CHASE_SPEED = 5;
+    const static int CHASE_SPEED = -1;
   public:
     Chase(Subsystem *s): Command(s, CHASE_SPEED) {};
     void Execute();
@@ -52,20 +52,20 @@ void Chase::Execute() {
 }
 
 bool Chase::IsFinished() {
-  return (cycleNumber >= 600);
+  return (cycleNumber >= 50);
 }
 
 
 // Blind - quick strob effect in intent to blind all around
 
 class Blind : public Command {
-    const static int SPEED = 1;
+    const static int SPEED = 0;
   public:
     Blind(Subsystem *s): Command(s, SPEED) {};
 
     void Execute() {
       if (my_strip != NULL) {
-        my_strip->SetColor(cycleNumber%2 ? CRGB::White : 0);
+        my_strip->SetColor(cycleNumber%2 ? CRGB::White : CRGB::Black);
       }
     };
 
@@ -135,7 +135,8 @@ class RainbowBreathe : public Command {
 Subsystem *lifter;
 Subsystem *pusher;
 Command *default_lifter;
-Command *default_pusher;
+CommandGroup *default_pusher;
+Command *breather_p;
 Command *chaser_p;
 Command *blinder_p;
 
@@ -159,7 +160,7 @@ void dispatchInputs() {
 
 void setup() {
   Serial.begin(9600);
-  Serial.print("Initializing...\n");
+  Serial.print("setup: Initializing...\n");
 
   pinMode(DATA_PIN_PUSHER, OUTPUT);
   pinMode(DATA_PIN_LIFTER, OUTPUT);
@@ -167,10 +168,15 @@ void setup() {
   lifter = new Subsystem(NUM_LEDS_LIFTER);
   pusher = new Subsystem(NUM_LEDS_PUSHER);
   default_lifter = new Chase(lifter);
-  default_pusher = new RainbowBreathe(pusher);
+  default_pusher = new CommandGroup(pusher);
+  breather_p = new RainbowBreathe(pusher);
 
   chaser_p = new Chase(pusher);
   blinder_p = new Blind(pusher);
+
+  default_pusher->AddSequential(chaser_p);
+  default_pusher->AddSequential(breather_p);
+  default_pusher->AddSequential(blinder_p);
 
   lifter->SetDefaultCommand(default_lifter);
   pusher->SetDefaultCommand(default_pusher);
@@ -186,7 +192,7 @@ void setup() {
   pusher->SetColor(CRGB::Black);
   FastLED.show();
   FastLED.delay(1000);
-  Serial.print("Init is done. Starting...\n");
+  Serial.print("setup: Init is done. Starting...\n");
 }
 
 
