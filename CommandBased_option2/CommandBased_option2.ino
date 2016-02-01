@@ -9,10 +9,10 @@
 
 #include "Lights3130.h"
 
-#define NUM_LEDS_PUSHER 64
-#define NUM_LEDS_LIFTER 64
+#define NUM_LEDS_PUSHER 32
+#define NUM_LEDS_LIFTER 39
 
-#define DATA_PIN_PUSHER 4
+#define DATA_PIN_PUSHER 2
 #define DATA_PIN_LIFTER 3
 
 #define DELAY 20 //sets the delay between light updates in milliseconds
@@ -125,7 +125,16 @@ class RainbowBreathe : public Command {
     bool IsFinished() { return (cycleNumber >= 300); };
 };
 
-
+// SolidColor
+//
+class SolidColor : public Command {
+	CRGB color;
+public:
+	SolidColor(Subsystem *s, CRGB c=CRGB::Green) :Command(s), color(c) {};
+	void Execute() {if(my_strip) my_strip->SetColor(color);};
+	bool IsFinished() { return cycleNumber > 50; };
+	void SetColor(CRGB c) {color=c;};
+};
 
 /*
  * Here and below is the execution part.
@@ -134,11 +143,17 @@ class RainbowBreathe : public Command {
 
 Subsystem *lifter;
 Subsystem *pusher;
-Command *default_lifter;
+CommandGroup *default_lifter;
 CommandGroup *default_pusher;
 Command *breather_p;
 Command *chaser_p;
 Command *blinder_p;
+Command *breather_l;
+Command *chaser_l;
+Command *blinder_l;
+
+SolidColor *solid_p;
+SolidColor *solid_l;
 
 void dispatchInputs() {
   while(Serial.available() > 0) {
@@ -154,6 +169,14 @@ void dispatchInputs() {
     else if(input.startsWith("Blind")) {
       pusher->SetCurrentCommand(blinder_p);
     }
+    else if(input.startsWith("Solid")) {
+      if(input.substring(6).startsWith("green")) {
+        solid_p->SetColor(CRGB::Green);
+        solid_l->SetColor(CRGB::Green);
+      }
+      pusher->SetCurrentCommand(solid_p);
+      lifter->SetCurrentCommand(solid_l);
+    }
   }
 }
 
@@ -167,21 +190,30 @@ void setup() {
 
   lifter = new Subsystem(NUM_LEDS_LIFTER);
   pusher = new Subsystem(NUM_LEDS_PUSHER);
-  default_lifter = new Chase(lifter);
+  default_lifter = new CommandGroup(lifter);
   default_pusher = new CommandGroup(pusher);
   breather_p = new RainbowBreathe(pusher);
+  breather_l = new RainbowBreathe(lifter);
 
   chaser_p = new Chase(pusher);
   blinder_p = new Blind(pusher);
 
+  chaser_l = new Chase(lifter);
+  blinder_l = new Blind(lifter);
+
+  solid_p = new SolidColor(pusher);
+  solid_l = new SolidColor(lifter);
+
+  default_lifter->AddSequential(chaser_l);
+  default_lifter->AddSequential(breather_l);
+
   default_pusher->AddSequential(chaser_p);
   default_pusher->AddSequential(breather_p);
-  default_pusher->AddSequential(blinder_p);
 
   lifter->SetDefaultCommand(default_lifter);
   pusher->SetDefaultCommand(default_pusher);
 
-  FastLED.addLeds<WS2811, DATA_PIN_PUSHER>(pusher->leds, NUM_LEDS_PUSHER);
+  FastLED.addLeds<WS2811, DATA_PIN_PUSHER, GRB>(pusher->leds, NUM_LEDS_PUSHER);
   FastLED.addLeds<NEOPIXEL, DATA_PIN_LIFTER>(lifter->leds, NUM_LEDS_LIFTER);
 
   lifter->SetColor(CRGB::Yellow);
