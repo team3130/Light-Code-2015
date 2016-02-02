@@ -182,7 +182,7 @@ void dispatchInputs() {
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.print("setup: Initializing...\n");
 
   pinMode(DATA_PIN_PUSHER, OUTPUT);
