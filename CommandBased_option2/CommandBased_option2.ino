@@ -86,7 +86,6 @@ class Breathe : public Command {
         CRGB color = m_color;
         if(cycleNumber < 256) {
           uint8_t val = triwave8(cycleNumber);
-          //Serial.print("Breathe: "); Serial.print(val); Serial.print("\n");
           color %= (val/2);
         }
         else color = 0;
@@ -112,7 +111,6 @@ class RainbowBreathe : public Command {
         CHSV color;
         if(cycleNumber < 256) {
           uint8_t val = triwave8(cycleNumber);
-          //Serial.print("Breathe: "); Serial.print(val); Serial.print("\n");
 	  color.h = (m_hue + cycleNumber*step)%256;
 	  color.s = 255;
           color.v = val/2;
@@ -132,7 +130,7 @@ class SolidColor : public Command {
 public:
 	SolidColor(Subsystem *s, CRGB c=CRGB::Green) :Command(s), color(c) {};
 	void Execute() {if(my_strip) my_strip->SetColor(color);};
-	bool IsFinished() { return cycleNumber > 50; };
+	bool IsFinished() { return cycleNumber > 5; };
 	void SetColor(CRGB c) {color=c;};
 };
 
@@ -183,6 +181,7 @@ void dispatchInputs() {
 
 void setup() {
   Serial.begin(115200);
+  Serial.setTimeout(20); // Default is 1000 ms = 1 sec, too long
   Serial.print("setup: Initializing...\n");
 
   pinMode(DATA_PIN_PUSHER, OUTPUT);
