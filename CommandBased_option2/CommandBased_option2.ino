@@ -42,7 +42,7 @@ void Chase::Execute() {
     if (
       (my_speed > 0 && (t + cycleNumber) % CHASE_SIZE == 0) ||
       (my_speed < 0 && (t - cycleNumber) % CHASE_SIZE == 0) ) {
-      pattern[t] = CRGB::Yellow;
+      pattern[t] = CRGB::Brown;
     }
     else pattern[t] = CRGB::Black;
   }
@@ -126,12 +126,19 @@ class RainbowBreathe : public Command {
 // SolidColor
 //
 class SolidColor : public Command {
-	CRGB color;
+	const int life = 50;
+	uint8_t m_hue;
 public:
-	SolidColor(Subsystem *s, CRGB c=CRGB::Green) :Command(s), color(c) {};
-	void Execute() {if(my_strip) my_strip->SetColor(color);};
-	bool IsFinished() { return cycleNumber > 5; };
-	void SetColor(CRGB c) {color=c;};
+	SolidColor(Subsystem *s, uint8_t c=100) :Command(s), m_hue(c) {};
+	void Execute();
+	bool IsFinished() { return cycleNumber > life; };
+	void SetColor(uint8_t c) {m_hue=c;};
+};
+
+void SolidColor::Execute() {
+	uint8_t val = 128 * (life - cycleNumber) / life;
+	uint8_t sat = m_hue > 100 ? 0 : 255;
+	if(my_strip) my_strip->SetColor(CHSV(m_hue, sat, val));
 };
 
 /*
@@ -168,9 +175,10 @@ void dispatchInputs() {
       pusher->SetCurrentCommand(blinder_p);
     }
     else if(input.startsWith("Solid")) {
-      if(input.substring(6).startsWith("green")) {
-        solid_p->SetColor(CRGB::Green);
-        solid_l->SetColor(CRGB::Green);
+      if(isDigit(input.charAt(6))) {
+        int hue = 110 - 10*input.substring(6).toInt();
+        solid_p->SetColor(hue);
+        solid_l->SetColor(hue);
       }
       pusher->SetCurrentCommand(solid_p);
       lifter->SetCurrentCommand(solid_l);
@@ -203,11 +211,11 @@ void setup() {
   solid_p = new SolidColor(pusher);
   solid_l = new SolidColor(lifter);
 
-  default_lifter->AddSequential(chaser_l);
   default_lifter->AddSequential(breather_l);
+  default_lifter->AddSequential(chaser_l);
 
-  default_pusher->AddSequential(chaser_p);
   default_pusher->AddSequential(breather_p);
+  default_pusher->AddSequential(chaser_p);
 
   lifter->SetDefaultCommand(default_lifter);
   pusher->SetDefaultCommand(default_pusher);
