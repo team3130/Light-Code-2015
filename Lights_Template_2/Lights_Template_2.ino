@@ -77,7 +77,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   void moveUp(int moveTimes, int color); // Moves every LED bulb color up one.
   void moveDown(int moveTimes, int color); //Moves every LED bulb color down one.
   void moveUpOnly(int low, int high); //Moves up the LED bulb colors from a range up.
-  void moveDownOnly(int low, int high); //Moves up the LED bulb colors from a ranage down.
+  void moveDownOnly(int low, int high,int runTimes, int cycleSpeed, CRGB color, bool rain); //Moves up the LED bulb colors from a ranage down.
   void alternateColor(CRGB color1, CRGB color2);// Makes the lights alternate between two colors
   void rippleCRGB(CRGB color, int rippleRate, int positionStart, int duration);//Makes the LEDs ripple from one LED to all others while also lowering each RGB value from one LED to the next.
   void rippleCHSV(CHSV color, int rippleRate, int positionStart, int duration, int HSV);//Makes the LEDs ripple from one LED to all others while also lowering each HSV of choice value from one LED to the next. (0=Hue, 1=Saturation, 2=value)
@@ -102,7 +102,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   CRGB leds[64];       //Light Array. Set to 64 due to some oddities.
   bool compare[64];
     short taskState = 0;
-    short cycleSpeed = 1;      //Beta Overhaul
+    int cycleSpeed = 25;      //Beta Overhaul
     short runProgress = 0;
     
     int returnLEDAmount();
@@ -143,6 +143,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   int colorTimer = 0;
   int impartialTimeKeeper = 0;
   int impartialForLoopKeeper = 0;
+  int cascadeProgress = 0;
   
   int syncPoint = 0;
   bool syncedUp = false;
@@ -260,7 +261,8 @@ void Subsystem::resetTimers(){
   forloopthingy = 0;
    chaseround = 0;
    timer = 0;
-   miscTimer = 0;                //When you want to get rid of all the timer values
+   miscTimer = 0;   //When you want to get rid of all the timer values
+   runTimer = 0;
    impartialTimeKeeper = 0;
    impartialForLoopKeeper = 0;
    done = false;
@@ -373,17 +375,23 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     if(_serialLessUpdateChooser ==1){    //Update choosing point for non-serial functions
    switch(taskState){
       case 0:
+      cycleSpeed = 10;
+      sparkle(CRGB::Green,5000,false);
+      //CRGB(CHSV(random8(245),255,random8(245)))
 break;
        
      case 1:
-     
+     brighten(CRGB::Red,1,0,actualNumberOfLeds);
 
 
 break;
       case 2:
+           brighten(CRGB::Blue,1,0,actualNumberOfLeds);
+
 break;
     
     case 3:
+               brighten(CRGB::Green,1,0,actualNumberOfLeds);
 
     
       
@@ -534,33 +542,66 @@ break;
       switch(taskState){
     
     case 0:
+    cycleSpeed = 150;
+    setColorFrom(CRGB::Red,actualNumberOfLeds-1,actualNumberOfLeds);
     break;
      
     case 1:
+      cycleSpeed = 1;
+    setColorFrom(CRGB::White,4,5);
+    setColorFrom(CRGB::Red,3,4);
+    setColorFrom(CRGB(210,0,0),2,3);
+    setColorFrom(CRGB(100,0,0),1,2);
+     setColorFrom(CRGB(10,0,0),0,1);
+    
 
     break;
      
     case 2:
+    cycleSpeed = 15;
+        moveUp(15,CRGB::Black);
+
 
     break;
     
     case 3:
+      cycleSpeed = 15;
+      brighten(CRGB::Black,5,0,actualNumberOfLeds);
 
     break;
     
     case 4:
+      cycleSpeed = 19;
+            rippleCHSV(CHSV(89,155,199),5,19,7, 0);
+
+
+    
     break;
     
     case 5:
+        cycleSpeed = 20;
+        brighten(CRGB::Black,1,0,actualNumberOfLeds);
+
+   
     break;
     
-    case 6:   
+    case 6:  
+       setColor(CRGB::Black);
+ 
+     
     break;
     
     case 7:
+        setColorFrom(CRGB(10,10,10),actualNumberOfLeds-2,actualNumberOfLeds);
+    
     break;
     
     case 8:
+    cycleSpeed = 65;
+        moveDownOnly(0,actualNumberOfLeds-2,5000,9,CRGB(CHSV(random8(245),255,random8(245))),true);
+        
+       // moveDown(25,CRGB::Blue);
+    
     break;
     
     case 9:
@@ -680,14 +721,21 @@ break;
     if(_serialLessUpdateChooser==3){
      switch(taskState){
        case 0:
+       cycleSpeed = 1;
+       brighten(CRGB::Black,5,0,actualNumberOfLeds);
           break;
       case 1:
+        setColorUp(lame,0,actualNumberOfLeds);
             break;
       
       case 2:
+              setColorUp(bluish,0,actualNumberOfLeds);
+
       break;
       
-      case 3:
+      case 3:        
+              setColorUp(orangeFruit,0,actualNumberOfLeds);
+
 
     break;
     
@@ -868,15 +916,30 @@ void Subsystem::moveUp(int moveTimes, int color){
   }
   
   
-  void Subsystem::moveDownOnly(int low, int high){
+  void Subsystem::moveDownOnly(int low, int high, int runTimes, int cycleSpeed, CRGB color, bool rain){
+    if(runTimes > runTimer){
     for(timer = low; timer<high; timer++){
-      if(timer=!0){
+      
      leds[timer-1] = leds[timer];
-      leds[timer] = CRGB::Black; 
-      }
+     if(rain){
+     if(random8(50) < 15){
+             leds[timer] = color; 
+     }else{
+            leds[timer] = CRGB::Black; 
+     }
+     }else{
+            leds[timer] = CRGB::Black; 
+     }
+     
+      
     }
-    FastLED.show();
-    done = true;
+    
+    runTimer++;
+    
+    }else{
+     FastLED.show();
+    done = true; 
+    }
   }
   
   void Subsystem::alternateColor(CRGB color1,CRGB color2){
@@ -1059,6 +1122,7 @@ void Subsystem::redFade(int runTimes){
    Synchronizer(int ledAmount);
     CRGB leds[64];        //The middleground array...that sorceries
     void runSystem(CRGB lightArray1[], bool from);
+    void sync(Subsystem system1, Subsystem system2);
     bool miscCheck = false;
     int syncTimer = 0;
     
@@ -1096,7 +1160,18 @@ void Subsystem::redFade(int runTimes){
   }
    
  }
- 
+ void Synchronizer::sync(Subsystem system1, Subsystem system2){
+   system1.runSystem(1,false);    //Sync to mid
+    runSystem(system1.leds,false);
+    runSystem(system2.leds,true);
+   system2.runSystem(1, false);    //Sync to mid
+    runSystem(system2.leds,false);
+    runSystem(system1.leds,true);
+    
+/*
+
+    */
+ }
  
   
 /*class Synchronizer
@@ -1174,9 +1249,9 @@ void Synchronizer::resetTimers(){
   ////
 
 
-Subsystem lightSystem1(NUM_LEDS_1,1,1,25,false,true);
-Subsystem lightSystem2(NUM_LEDS_2,1,2,25,false,false);
-Subsystem syncSystem1(NUM_LEDS_1,1,3,25,false,true);
+Subsystem lightSystem1(NUM_LEDS_1,1,1,1,false,true);
+Subsystem lightSystem2(NUM_LEDS_2,1,2,1,false,false);
+Subsystem syncSystem1(NUM_LEDS_1,1,3,1,false,true);
 Synchronizer lightSet1(NUM_LEDS_1);
 
 
@@ -1268,7 +1343,8 @@ void loop(){
     lightSet1.runSystem(syncSystem1.leds,false);
     lightSet1.runSystem(lightSystem1.leds,true);
     lightSystem2.runSystem(1,false);
-    
+    lightSystem2.runSystem(1,false);
+
      
    FastLED.show();
   if(lightSystem1.returnSyncStatus() && syncSystem1.returnSyncStatus()){
