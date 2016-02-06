@@ -92,6 +92,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   void override();//SERIAL ONLY: Checks if any serial functions need to occur that override the current function.
   void runSystem(int runTimes, bool autoDelay);//Runs the system once.
   void updateTask();//Updates the systems task when a system is done running.
+  int serialChangeTask(int currentTaskState, int changeTo);
   
   int getDelay();//Returns how much delay the subsystem should run.
   int getTaskState();//Returns the current task state of the subsystem.
@@ -150,7 +151,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   bool syncedForNextStep =false;
 
   
-  char serialValue = Serial.read();
+  String serialValue;
   
   
   
@@ -218,6 +219,14 @@ void Subsystem::synced(){
 bool Subsystem::returnSyncStatus(){
  return syncedForNextStep; 
 }
+
+    int Subsystem::serialChangeTask(int currentTaskState, int changeTo){
+     if(currentTaskState != changeTo){
+      resetTimers();
+     } 
+       return changeTo;
+    }
+
 ///////
 ///////
 ///////
@@ -285,39 +294,42 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
   
   
  if(isSerialBased){                //If the subsystem runs off of serial input
-   serialValue = Serial.read();    
-  
+   while(Serial.available() >0){ 
+        serialValue = Serial.readString(); 
+      Serial.print(" Recieved: ");
+      Serial.print(serialValue);  
+   }
        if(_updateChooser == 1){    //Determine what set of steps to run
-    switch(serialValue){            //Switch the serial value to determine task state
-      
-     
-        case 'R':
-       taskState = 1;
-       resetTimers();
-       break;
+       if(serialValue.startsWith("Chase")){
+          taskState = serialChangeTask(taskState,1);
+          Serial.print(" Running One...");
+          Serial.print(runTimer);
+          Serial.print("\n");
+       }else if(serialValue.startsWith("Blind")){
+          taskState = serialChangeTask(taskState,2);
+          Serial.print(" Running Two...");
+          Serial.print(runTimer);
+          Serial.print("\n");
+          
+
+       }else if(serialValue.startsWith("Solid")){
+          Serial.print(" Running Three...");
+          Serial.print(runTimer);
+          Serial.print("\n");
+          taskState = serialChangeTask(taskState,3);
+         }else{
+         serialChangeTask(taskState,100); //Blow past all setting to trigger default.
+       //Serial.print(" Task State Successfully Set to Default...\n");
+
+         
+       }
        
-       
-       
-       default:
-       break;
-       
-      
-     }
+   
        }else{
-         switch(serialValue){        //If it doesn't run on update chooser 1 inputs then go here
-      
-      case 'R':
-       taskState = 2;
-resetTimers();
-       break;
-       
-       
-       default:
-       break;
+         taskState = 0;
        }
  
  
-}
 }else{                //If the subsystem is not serial based
                         //Consider serialess things run dumb they have no reason to break off. They just go up and down the steps.
 if(completelyDone){    //If all tasks are done startover. 
@@ -354,10 +366,15 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
     runProgress = 0;
     
   if(isSerialBased){
-    override();      //if the function runs on serial make sure no emergency inputs are coming
-    
+    override();
+      if(done){
+       serialValue = "Done";
+       taskState = 100;
+      }    //if the function runs on serial make sure no emergency inputs are coming
+    updateTask();
   }
   if(done){
+    
     resetTimers();    //When the subsystem is done with its last function prepare timers for future use and get the next task
    updateTask(); 
   }
@@ -365,17 +382,33 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
   if(isSerialBased){   //Here is where serial actually runs
   switch(taskState){
    case 1:
-                       //run light function here
+   cycleSpeed = 2;
+   moveDownOnly(0,actualNumberOfLeds-2,500,5,CRGB(CHSV(random8(245),255,random8(245))),true);
+   //CRGB(CHSV(random8(245),255,random8(245)))
    break;
  
+ 
+   case 2:
+   cycleSpeed = 2;
+   moveDownOnly(0,actualNumberOfLeds-2,500,5,CRGB::Yellow,true);
+   break;
+   
+   case 3:
+   cycleSpeed = 2;
+   moveDownOnly(0,actualNumberOfLeds-2,500,5,CRGB::White,true);
+   break;
+   
    default:
+   cycleSpeed = 1;
+   moveDownOnly(0,actualNumberOfLeds-2,1,5,CRGB::Blue,true);
+
    break; 
   }
   }else{
     if(_serialLessUpdateChooser ==1){    //Update choosing point for non-serial functions
    switch(taskState){
       case 0:
-      cycleSpeed = 10;
+      cycleSpeed = 1;
       sparkle(CRGB::Green,5000,false);
       //CRGB(CHSV(random8(245),255,random8(245)))
 break;
@@ -1250,7 +1283,7 @@ void Synchronizer::resetTimers(){
 
 
 Subsystem lightSystem1(NUM_LEDS_1,1,1,1,false,true);
-Subsystem lightSystem2(NUM_LEDS_2,1,2,1,false,false);
+Subsystem lightSystem2(NUM_LEDS_2,1,2,40,true,false);
 Subsystem syncSystem1(NUM_LEDS_1,1,3,1,false,true);
 Synchronizer lightSet1(NUM_LEDS_1);
 
@@ -1273,7 +1306,8 @@ pinMode(DATA_PIN_1,OUTPUT);
 
   FastLED.addLeds<WS2811, DATA_PIN_1, GRB>(lightSet1.leds,NUM_LEDS_1);
   FastLED.addLeds<NEOPIXEL, DATA_PIN_2>(lightSystem2.leds,NUM_LEDS_2);
- Serial.begin(9600);
+ Serial.begin(115200);
+ Serial.setTimeout(40);
  
   //lightSystem1.setColor(CRGB::Green); 
   //lightSystem1.taskState = -5;
@@ -1352,7 +1386,7 @@ void loop(){
     syncSystem1.desynced(); 
   }
   
-  if(lightSystem1.getTaskState() > 0 or lightSystem2.getTaskState() > 0 or syncSystem1.getTaskState() > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
+  if(lightSystem1.getTaskState() > 0 or lightSystem2.getTaskState() > -100 or syncSystem1.getTaskState() > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
    
      delay((lightSystem1.getDelay() + lightSystem2.getDelay())/2); //Delay extra if running an override as most overrides shouldn't update fast.
     
