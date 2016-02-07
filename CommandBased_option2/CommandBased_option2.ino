@@ -188,7 +188,7 @@ void dispatchInputs() {
 
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(57600);
   Serial.setTimeout(20); // Default is 1000 ms = 1 sec, too long
   Serial.print("setup: Initializing...\n");
 
@@ -212,10 +212,10 @@ void setup() {
   solid_l = new SolidColor(lifter);
 
   default_lifter->AddSequential(breather_l);
-  default_lifter->AddSequential(chaser_l);
+  //default_lifter->AddSequential(chaser_l);
 
   default_pusher->AddSequential(breather_p);
-  default_pusher->AddSequential(chaser_p);
+  //default_pusher->AddSequential(chaser_p);
 
   lifter->SetDefaultCommand(default_lifter);
   pusher->SetDefaultCommand(default_pusher);
