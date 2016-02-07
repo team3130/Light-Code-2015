@@ -20,6 +20,7 @@ class Subsystem {
     CRGB* leds;
   private:
     size_t m_size;
+    bool m_first;
     Command *default_command;
     Command *current_command;
   friend void setup();
@@ -58,6 +59,7 @@ public:
   virtual void End();
   void AddSequential(Command *command); 
 protected:
+  bool m_first;
   CommandContainer *m_root;
   CommandContainer *m_iterator;
 };

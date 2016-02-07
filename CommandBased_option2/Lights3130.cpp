@@ -5,6 +5,7 @@
 Subsystem::Subsystem(int numberOfLeds) {
   leds = new CRGB[numberOfLeds];
   m_size = numberOfLeds;
+  m_first = true;
   default_command = NULL;
   current_command = NULL;
 }
@@ -24,15 +25,16 @@ void Subsystem::SetCurrentCommand(Command *command) {
 }
 
 void Subsystem::execute() {
+  if (current_command == NULL) current_command = default_command;
+
   if (current_command != NULL) {
-    if (!current_command->Run()) {
-      current_command = NULL;
-      default_command->Initialize();
+    if (m_first) {
+      current_command->Initialize();
+      m_first = false;
     }
-  }
-  else if (default_command != NULL) {
-    if (!default_command->Run()) {
-      default_command->Initialize();
+    if (false == current_command->Run()) {
+      current_command = NULL;
+      m_first = true;
     }
   }
 }
@@ -103,12 +105,14 @@ CommandGroup::CommandGroup (Subsystem *subsystem, int speed)
   : Command(subsystem, speed)
   , m_root(NULL)
   , m_iterator(NULL)
+  , m_first(true)
 {
 }
 
 void CommandGroup::Initialize() {
   Command::Initialize();
   m_iterator = m_root;
+  m_first = true;
 }
 
 bool CommandGroup::Run() {
@@ -116,24 +120,26 @@ bool CommandGroup::Run() {
   if (m_iterator == NULL) m_iterator = m_root;
 
   if (Command::Run() == false) {
-	  if (m_iterator->command != NULL) m_iterator->command->End();
-	  return false;
+    if (m_iterator->command != NULL) m_iterator->command->End();
+    return false;
   }
 
-  if (m_iterator->command != NULL && m_iterator->command->Run()) return true;
+  if (m_iterator->command != NULL) {
+    if (m_first) {
+      m_first = false;
+      m_iterator->command->Initialize();
+    }
+    if (m_iterator->command->Run()) return true;
+  }
 
   // If we made it all the way down to here it means the current command has finished
   // It's time to move forward to the next command in the group
-  if (m_iterator->next != NULL) {
-    m_iterator = m_iterator->next;
-    if (m_iterator != NULL && m_iterator->command != NULL)
-    	m_iterator->command->Initialize();
-    return true;
+  m_iterator = m_iterator->next;
+  if (m_iterator == NULL) {
+    // This is the end. Run End() and retire.
+    End();
+    return false;
   }
-
-  // This is the end. Run End() and retire.
-  End();
-  return false;
 }
 
 void CommandGroup::End() {

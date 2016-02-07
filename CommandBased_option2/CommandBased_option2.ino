@@ -215,7 +215,7 @@ void setup() {
   //default_lifter->AddSequential(chaser_l);
 
   default_pusher->AddSequential(breather_p);
-  //default_pusher->AddSequential(chaser_p);
+  default_pusher->AddSequential(chaser_p);
 
   lifter->SetDefaultCommand(default_lifter);
   pusher->SetDefaultCommand(default_pusher);
