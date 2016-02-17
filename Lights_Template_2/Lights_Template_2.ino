@@ -73,7 +73,6 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   
   void resetSubsystem(); //Wipes everything in the system to the starting settings.
   void resetTimers();//Wipes only the timers in the system.
-  void override();//SERIAL ONLY: Checks if any serial functions need to occur that override the current function.
   void runSystem(int runTimes, bool autoDelay);//Runs the system once.
   void updateTask();//Updates the systems task when a system is done running.
   int serialChangeTask(int currentTaskState, int changeTo);
@@ -176,7 +175,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   
 }
 
-void Subsystem::sync(CRGB middleGround[], bool from){
+/*void Subsystem::sync(CRGB middleGround[], bool from){
     if(!miscCheck){      //To avoid setting nulls = to nulls and crashing. boom.
       for(syncTimer = 0; syncTimer< actualNumberOfLeds; syncTimer++){
        middleGround[syncTimer] = CRGB::Black;
@@ -200,7 +199,7 @@ void Subsystem::sync(CRGB middleGround[], bool from){
   }
   
 }
-
+*/
 
 
 int Subsystem::returnLEDAmount(){
@@ -276,7 +275,6 @@ void Subsystem::resetSubsystem(){
   taskState = 0;                    //Just wipe the daylights out of everything
         resetTimers();
         completelyDone = false;
-        done = false;
 
 }
 
@@ -294,9 +292,6 @@ void Subsystem::resetTimers(){
    
 }
 
-void Subsystem::override(){      //Used to barge ahead in line for functions that have a reason to run other than being pretty
-  
-}
 
 int Subsystem::tempRand(int randomNumber){
   if(temporaryRandomVariable == -1){
@@ -402,12 +397,10 @@ taskState++; //Move onto the next task for the system
 ///
 void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function used to run the subsystem
   for(miscTimer = 0; miscTimer < runTimes; miscTimer++){    //Only important of you run a subsystem many times. Used generally for startup and weird things
-  if(!syncedUp or !syncedForNextStep){
   if(runProgress == cycleSpeed){ 
     runProgress = 0;
     
   if(isSerialBased){
-    override();
       if(done){
        serialValue = "Done";
       taskState = 100;
@@ -436,7 +429,7 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
    break;
    
    case 3:
-   //cycleSpeed = 2;
+   //Cycle speed is set in the function.
    moveDownOnly(0,actualNumberOfLeds,4,6,CRGB::White,true);
    
 
@@ -445,7 +438,7 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
    
    default:
    cycleSpeed = 1;
-   moveDownOnly(0,actualNumberOfLeds,1,5,CRGB(0,0,random16(180)),true);
+   moveDownOnly(0,actualNumberOfLeds,1,5,CRGB(0,0,random16(150)),true);
 
    break; 
   }
@@ -496,131 +489,7 @@ completelyDone = true;
     completelyDone = true;
                 //Sync 2
     break;
-    
-    case 6:
-
-
-          
-    break;
-    
-    case 7:
-                           //Sync 3
-    break;
-    
-    case 8:
-    break;
-    
-    case 9:
-    break;
-    
-    case 10:
-    break;
-    case 11:
-     
-    break;
-    
-    case 12:
-     
-    break;
-    
-    
-    break;
-    
-    case 14:
-    
-    break;
-    
-    case 15:
-    
-    break;
-    
-    case 16:
-  
-    break;
-    
-    case 17:
-  
-    break;
-    
-    case 18:
    
-    break;
-    
-    case 19:
-    
-    break;
-
-    case 20:
-    break;
-    
-    case 21:
-     
-
-    break;
-    
-    case 22:
- 
-    break;
-    
-    case 23:
-     
-
-    break;
-    
-     case 24:
-    
-    break;
-    
-    case 25:
-     
-    break;
-    
-    case 26:
-     
-    break;
-    
-    case 27:
-     
-    break;
-    
-    case 28:
-     
-    break;
-    
-    case 29:
-     
-    break;
-    
-    case 30:
-     
-    break;
-    
-    case 31:
-   
-    break;
-    
-    case 32:                  //ONCE AGAIN NO
-    break;
-    
-    case 33:
-    break;
-    
-    case 34:
-    break;
-    
-    case 35:
-    break;
-    
-    case 36:
-    break;
-    
-    case 37:
-    break;
-    
-    case 38:
-    completelyDone = true;
-    done = true;
-    break;
     
     default:
     break;
@@ -703,115 +572,9 @@ completelyDone = true;
     
     break;
     
-    case 9:
-    break;
-    
-    case 10:
-    break;
-    case 11:
-     
-    break;
-    
-    case 12:
-     
-    break;
     
     
-    break;
     
-    case 14:
-    
-    break;
-    
-    case 15:
-    
-    break;
-    
-    case 16:
-  
-    break;
-    
-    case 17:
-  
-    break;
-    
-    case 18:
-   
-    break;
-    
-    case 19:
-    
-    break;
-    case 20:
-    break;
-    
-    case 21:
-     
-
-    break;
-    
-    case 22:
- 
-    break;
-    
-    case 23:
-     
-
-    break;
-    
-     case 24:
-    
-    break;
-    
-    case 25:
-     
-    break;
-    
-    case 26:
-     
-    break;
-    
-    case 27:
-     
-    break;
-    
-    case 28:
-     
-    break;
-    
-    case 29:
-     
-    break;
-    
-    case 30:
-     
-    break;
-    
-    case 31:
-   
-    break;
-    
-    case 32:                  //ONCE AGAIN NO
-    break;
-    
-    case 33:
-    break;
-    
-    case 34:
-    break;
-    
-    case 35:
-    break;
-    
-    case 36:
-    break;
-    
-    case 37:
-    break;
-    
-    case 38:
-    completelyDone = true;
-    break;
     
     default:
     break;
@@ -864,35 +627,8 @@ break;
     completelyDone = true;
     break;
     
-    case 8:
-    
-    
-    break;
-    
-    case 9:
-    break;
-    
-    case 10:
-    break;
-    case 11:
-     
-    break;
-    
-    case 12:
-     
-    break;
-    
-    
-    break;
-    
-    case 14:
-    
-    break;
-    
-    case 15:
-    completelyDone = true;
-    done = true;
-    break;
+   default:
+   break;
     
      } 
     }
@@ -906,7 +642,7 @@ break;
 
   }
   
-}
+
 runProgress++;
   }
 }
