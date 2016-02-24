@@ -1,12 +1,23 @@
-//Fix sync... probably accept the input straight from the second subsystem.
-//Scratch that thats impossible. Cannot refernce systems that don't yet exist in system commands
-//Need CRGB array middeground floating somewhere
-//Need to get synced back to working.
-//Need to run sync everytime assuming subsystem is synced
-//Make sure subsystems run in order so that the right things override each other
-//need to make sure things desync properly
+//RED IS SERIAL
+//TODO
+/*
+-Add Transitions to serial
+-Make everything run on serial?
+-Main colors: Red, Blue, Yellow.
+-Assuming one strip: Hyper advanced serial idle?
+-Background with some type of serial rain?
+-Not in competition serial patterns? (Disabled patterns)
 
+-=-=-=-=-=-
+Serial Ideas
+-Traditional sparkle splash for idle
+-One system tempRand brighten between color for breath
+-Start Pattern
+-Fire Pattern: SetColorUp + Brighten
+-End Pattern: Sparkle + Brighten to whtie
+-Idle Pattern DONE
 
+*/
 //DO NOT USE Port 13. Really. There are plenty of other ports. Don't do it.
 //Code designed to run WS2811 LEDS and NEOPIXELs
 //This runs on a custom built multitasker for light strips. It is designed
@@ -15,11 +26,12 @@
 //Due to things the multitasker works on each function only doing one thing
 //and then stopping.
 #include <FastLED.h>  //Library we use because options. There are other things out there like the official neopixel library which are much easier to use. However they are overall much more limited and don't allow fancy things to be done. Should a time ever come where there is not enough time or people interested in learning lights to a serious degree just use one of these libraries.
-#define NUM_LEDS_2 39
-#define NUM_LEDS_1 32 //Number of Leds in strip 1
-#define DATA_PIN_1 2  //Says which data pin to use for LED  strip 1
-#define DATA_PIN_2 3
+#define NUM_LEDS_SIDES 47 //Number of Leds in strip 1
+#define NUM_LEDS_UNDERGLOW 40
+#define DATA_PIN_UNDERGLOW 5 //TBD
+#define DATA_PIN_SIDES 8
 
+String serialValue;
 CRGB lame = CRGB(20,20,20);
 CRGB blaple = CRGB(76,69,88); 
 CRGB bluish = CRGB(10,50,250);
@@ -146,7 +158,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   int impartialTimeKeeper = 0;
   int impartialForLoopKeeper = 0;
   int cascadeProgress = 0;
-  int temporaryRandomVariable[5];
+  int temporaryRandomVariable[5] = {-1,-1,-1,-1,-1};
     
   int syncPoint = 0;
   bool syncedUp = false;
@@ -154,7 +166,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   bool test = false;
 
   
-  String serialValue;
+  //String serialValue;
   
   
   
@@ -286,14 +298,14 @@ void Subsystem::resetTimers(){
    impartialTimeKeeper = 0;
    impartialForLoopKeeper = 0;
    temporaryRandomVariable[0] = -1;
-      temporaryRandomVariable[1] = -1;
+     
+   temporaryRandomVariable[1] = -1;
 
    temporaryRandomVariable[2] = -1;
 
    temporaryRandomVariable[3] = -1;
 
    temporaryRandomVariable[4] = -1;
-
    done = false;
    miscCheck = false;
    
@@ -319,7 +331,7 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
   
   
  if(isSerialBased){                //If the subsystem runs off of serial input
-   
+  
        if(_updateChooser == 1){
          //Serial.print(taskState);    //Determine what set of steps to run
        if(serialValue.startsWith("Chase")){
@@ -348,6 +360,13 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
           }
           test = true;
          }
+         if(serialValue.startsWith("Idle")){
+          Serial.print(" Running Idle...");
+          Serial.print("\n");
+         taskState = serialChangeTask(taskState,4);
+        test = true; 
+         }
+         
          if(!test){
         
          
@@ -365,7 +384,12 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
        
    
        }else{
-         taskState = 0;
+         if(serialValue.startsWith("Idle")){
+          Serial.print(" Running Idle...");
+          Serial.print("\n");
+         taskState = serialChangeTask(taskState,4);
+         }
+         
        }
  
  
@@ -418,6 +442,8 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
   }
   
   if(isSerialBased){   //Here is where serial actually runs
+  if(_updateChooser ==1){
+  
   switch(taskState){
    case 1:
    cycleSpeed = 2;
@@ -439,46 +465,58 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
 
    break;
    
+   case 4:
+   brighten(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),1,0,actualNumberOfLeds,2);
+   break;
+   
+   case 5:
+   setColorUp(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),0,actualNumberOfLeds);
+   
    default:
    cycleSpeed = 1;
-   moveDownOnly(0,actualNumberOfLeds,1,5,CRGB(0,0,random16(150)),true);
+   moveDownOnly(0,actualNumberOfLeds,1,5,CRGB::Blue,true);
+   break;
+   //sparkle(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),500,true);
+   //moveDownOnly(0,actualNumberOfLeds,1,5,CRGB(0,0,random16(150)),true);
 
    break; 
+  }
+  }else{
+   switch(taskState){
+     
+    case 4:
+     //sparkle(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),500,true); 
+   break; 
+     
+    default:
+    cycleSpeed =1;
+    sparkle(CRGB::Yellow,500,true);
+    break;
+   } 
   }
   }else{
     if(_serialLessUpdateChooser ==1){    //Update choosing point for non-serial functions
    switch(taskState){
       case 0:
-      cycleSpeed = 2;
-         //rippleCRGB(CRGB::Red,25,random8(31),3);//Makes the LEDs ripple from one LED to all others while also lowering each RGB value from one LED to the next.
 
-      sparkle(CRGB(0,random16(255),0),tempRand(random16(800),0),false);
-      //CRGB(CHSV(random8(245),255,random8(245)))
 break;
        
      case 1:    
-     cycleSpeed = 1;
-         rippleCRGB(CRGB::Blue,30,tempRand(random8(31),0),2);//Makes the LEDs ripple from one LED to all others while also lowering each RGB value from one LED to the next.
       break;
       
       case 2:
-      cycleSpeed = 4;
-       doNothingFor(tempRand(random8(30),0));
+      
 break;
     
     case 3:
-done = true;
-completelyDone = true;
-               //brighten(CRGB::Green,1,0,actualNumberOfLeds);
+
 
     
       
     break;
     
     case 4:
-              //brighten(CRGB::Black,1,0,actualNumberOfLeds);
-              done = true;
-    completelyDone = true;
+              
 
           
                               //Sync 1
@@ -488,9 +526,7 @@ completelyDone = true;
     break;
     
     case 5:
-    done = true;
-    completelyDone = true;
-                //Sync 2
+    
     break;
    
     
@@ -503,76 +539,51 @@ completelyDone = true;
       switch(taskState){
     
     case 0:
-    cycleSpeed =1;
-    //cycleSpeed = 150;
-    //setColorFrom(CRGB::Red,actualNumberOfLeds-1,actualNumberOfLeds);
-    setColor(CRGB::Yellow);
+    done = true;
     break;
      
     case 1:
-    setColorUp(CRGB::Yellow,0,actualNumberOfLeds);
-         //cycleSpeed = 1;
-    //setColorFrom(CRGB::White,4,5);
-    //setColorFrom(CRGB::Red,3,4);
-    //setColorFrom(CRGB(210,0,0),2,3);
-    //setColorFrom(CRGB(100,0,0),1,2);
-     //setColorFrom(CRGB(10,0,0),0,1);
+    cycleSpeed =1;
+    
     
 
     break;
      
     case 2:
-    setColor(CRGB::White);
-    
-    
-    
-    //cycleSpeed = 15;
-      //  moveUp(15,CRGB::Black);
+
 
 
     break;
     
     case 3:
-     brighten(CRGB::Black,3,0,actualNumberOfLeds,4);
-
-      //cycleSpeed = 15;
-      //brighten(CRGB::Black,5,0,actualNumberOfLeds);
+     
 
     break;
     
     case 4:
-        done = true;
-    completelyDone = true;
-      //cycleSpeed = 19;
-        //    rippleCHSV(CHSV(89,155,199),5,19,7, 0);
+        
 
 
     
     break;
     
     case 5:
-        //cycleSpeed = 20;
-        //brighten(CRGB::Black,1,0,actualNumberOfLeds);
+
 
    
     break;
     
     case 6:  
-       //setColor(CRGB::Black);
  
      
     break;
     
     case 7:
-       // setColorFrom(CRGB(10,10,10),actualNumberOfLeds-2,actualNumberOfLeds);
     
     break;
     
     case 8:
-    //cycleSpeed = 65;
-      //  moveDownOnly(0,actualNumberOfLeds-2,5000,9,CRGB(CHSV(random8(245),255,random8(245))),true);
-        
-       // moveDown(25,CRGB::Blue);
+
     
     break;
     
@@ -585,33 +596,32 @@ completelyDone = true;
     break;
    }
     }
-    if(_serialLessUpdateChooser==3){
+    if(_serialLessUpdateChooser==3){    //EX-Test rig. Now underglow.
      switch(taskState){
        case 0:
        cycleSpeed = 1;
-        setColor(CRGB::White);
+        done = true;
         break;
         
       case 1:
-      brighten(CRGB(0,0,20),1,0,actualNumberOfLeds,0);
+      cycleSpeed =1;
+         brighten(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),1,0,actualNumberOfLeds,2);  //IDLE PATTERN
+
 break;
       
       case 2:
-       done = true;
-       completelyDone = true;
+      done = true;
+      completelyDone=true;
              
-              //setColorUp(bluish,0,actualNumberOfLeds);
 
       break;
       
       case 3:        
-              setColorUp(orangeFruit,0,actualNumberOfLeds);
 
 
     break;
     
     case 4:
-               setColorUp(CRGB::Green,0,actualNumberOfLeds);
 
 
 
@@ -619,17 +629,16 @@ break;
     break;
     
     case 5:
-                  setColorUp(CRGB::Purple,0,actualNumberOfLeds);
 
     break;
     
     case 6:
-                   brighten(CRGB::Black,1,0,actualNumberOfLeds,0);   
     break;
     
     case 7:
     done = true;
     completelyDone = true;
+    
     break;
     
    default:
@@ -1122,13 +1131,12 @@ void Synchronizer::resetTimers(){
   ////
 
 
-Subsystem lightSystem1(NUM_LEDS_1,1,1,1,false,true);      //Non-Serial
-Subsystem lightSystem2(NUM_LEDS_2,1,2,5,true,true);      //Serial Based
-Subsystem syncSystem1(NUM_LEDS_1,1,3,1,false,true);      //Bottom Secondary System
-//Subsystem syncSystem2(NUM_LEDS_2,1,2,1,false,true);
+Subsystem lightSystemSide(NUM_LEDS_SIDES,1,2,8,true,true);      //Serial Based
+Subsystem syncSystemSide(NUM_LEDS_SIDES,1,3,8,true,true);      //Secondary Serial
+Subsystem lightSystemUnderGlow(NUM_LEDS_UNDERGLOW,1,3,8,false,false);
 
-Synchronizer lightSet1(NUM_LEDS_1);
-//Synchronizer lightSet2(NUM_LEDS_2);
+
+Synchronizer lightSetSide(NUM_LEDS_SIDES);
 
 
 
@@ -1145,10 +1153,11 @@ Synchronizer lightSet1(NUM_LEDS_1);
 
 
 void setup(){
-pinMode(DATA_PIN_1,OUTPUT);
+pinMode(DATA_PIN_SIDES,OUTPUT);
+pinMode(DATA_PIN_UNDERGLOW, OUTPUT);
 
-  FastLED.addLeds<WS2811, DATA_PIN_1, GRB>(lightSet1.leds,NUM_LEDS_1);
-  FastLED.addLeds<WS2812B, DATA_PIN_2>(lightSystem2.leds,NUM_LEDS_2);
+  FastLED.addLeds<WS2812B, DATA_PIN_SIDES, GRB>(lightSetSide.leds, NUM_LEDS_SIDES);
+  FastLED.addLeds<WS2812B, DATA_PIN_UNDERGLOW, RGB>(lightSystemUnderGlow.leds, NUM_LEDS_UNDERGLOW);
  Serial.begin(57600);
  Serial.setTimeout(40);
  
@@ -1213,33 +1222,29 @@ lightSystem2.setColor(CRGB::Black);  //Yey....this should be part of ^^
 
 void loop(){
   
-  
-    RNGTimer++;
-    lightSystem1.runSystem(1,false);
-    lightSet1.runSystem(lightSystem1.leds,false);
-    lightSet1.runSystem(syncSystem1.leds,true);
-   syncSystem1.runSystem(1, false);
-    lightSet1.runSystem(syncSystem1.leds,false);
-    lightSet1.runSystem(lightSystem1.leds,true);
+   if(Serial.available() >0){ 
+        serialValue = Serial.readString(); 
+      Serial.print(" Recieved: ");
+      Serial.print(serialValue);  
+   }
+   
+    lightSystemSide.runSystem(1,false);
+    lightSetSide.runSystem(lightSystemSide.leds,false);
+    lightSetSide.runSystem(syncSystemSide.leds,true);
+   syncSystemSide.runSystem(1, false);
+    lightSetSide.runSystem(syncSystemSide.leds,false);
+    lightSetSide.runSystem(lightSystemSide.leds,true);
     
-    lightSystem2.runSystem(1,false);
-    //lightSet2.runSystem(lightSystem2.leds,false);
-    //lightSet2.runSystem(syncSystem2.leds,true);
-    //syncSystem2.runSystem(1,false);
-    //lightSet2.runSystem(syncSystem2.leds,false);
-    //lightSet2.runSystem(lightSystem2.leds,true);
+    lightSystemUnderGlow.runSystem(1,false);
+      
 
      
    FastLED.show();
-   
-  if(lightSystem1.returnSyncStatus() && syncSystem1.returnSyncStatus()){
-     lightSystem1.desynced();
-    syncSystem1.desynced(); 
-  }
+ 
   
-  if(lightSystem1.getTaskState() > 0 or lightSystem2.getTaskState() > -100 or syncSystem1.getTaskState() > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
+  if(lightSystemSide.getTaskState() > 0 or syncSystemSide.getTaskState() > 0 or lightSystemUnderGlow.getTaskState() > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
    
-     delay((lightSystem1.getDelay() + lightSystem2.getDelay())/2); //Delay extra if running an override as most overrides shouldn't update fast.
+     delay((lightSystemSide.getDelay() + syncSystemSide.getDelay() + lightSystemUnderGlow.getDelay())/2); //Delay extra if running an override as most overrides shouldn't update fast.
     
 }
 
