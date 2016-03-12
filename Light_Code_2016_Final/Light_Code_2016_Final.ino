@@ -10,11 +10,11 @@
 
 -=-=-=-=-=-
 Serial Ideas
--Traditional sparkle splash for idle
+-Traditional sparkle splash for idle DONE
 -One system tempRand brighten between color for breath
--Start Pattern
--Fire Pattern: SetColorUp + Brighten
--End Pattern: Sparkle + Brighten to whtie
+-Start Pattern 
+-Fire Pattern: SetColorUp + Brighten DONE. BOTH ARE SAME SO THINGS WORK
+-End Pattern: Sparkle + Brighten to Black DONE
 -Idle Pattern DONE
 
 */
@@ -27,9 +27,11 @@ Serial Ideas
 //and then stopping.
 #include <FastLED.h>  //Library we use because options. There are other things out there like the official neopixel library which are much easier to use. However they are overall much more limited and don't allow fancy things to be done. Should a time ever come where there is not enough time or people interested in learning lights to a serious degree just use one of these libraries.
 #define NUM_LEDS_SIDES 47 //Number of Leds in strip 1
+#define NUM_LEDS_POLES 5
 #define NUM_LEDS_UNDERGLOW 40
 #define DATA_PIN_UNDERGLOW 5 //TBD
 #define DATA_PIN_SIDES 8
+#define DATA_PIN_POLES 1
 
 String serialValue;
 CRGB lame = CRGB(20,20,20);
@@ -95,7 +97,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
 
   
   
-  CRGB leds[64];       //Light Array. Set to 64 due to some oddities.
+  CRGB leds[50];       //Light Array. Set to 64 due to some oddities.
     short taskState = 0;
     int cycleSpeed = 25;      //Beta Overhaul
     short runProgress = 0;
@@ -151,6 +153,7 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   int newcolorG = 0;//Sets new color for G in the function ripple equal to 0
   int newcolorB = 0;//Sets new color for B in the function ripple equal to 0
   
+  int accuracy = 0;
   int timer = 0;
   int runTimer = 0;
   int miscTimer = 0;
@@ -332,7 +335,6 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
   
  if(isSerialBased){                //If the subsystem runs off of serial input
   
-       if(_updateChooser == 1){
          //Serial.print(taskState);    //Determine what set of steps to run
        if(serialValue.startsWith("Chase")){
           taskState = serialChangeTask(taskState,1);
@@ -356,7 +358,7 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
           taskState = serialChangeTask(taskState,3);
           
           if(isDigit(serialValue.charAt(6))){
-           cycleSpeed =  serialValue.substring(6).toInt() + 8;
+           accuracy =  serialValue.substring(6).toInt();
           }
           test = true;
          }
@@ -364,6 +366,18 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
           Serial.print(" Running Idle...");
           Serial.print("\n");
          taskState = serialChangeTask(taskState,4);
+        test = true; 
+         }
+         if(serialValue.startsWith("Shooter")){
+          Serial.print("Running Shooter...");
+          Serial.print("\n");
+         taskState = serialChangeTask(taskState,5);
+        test = true; 
+         }
+         if(serialValue.startsWith("Finish")){
+          Serial.print("Running Finish...");
+          Serial.print("\n");
+         taskState = serialChangeTask(taskState,6);
         test = true; 
          }
          
@@ -383,14 +397,7 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
        
        
    
-       }else{
-         if(serialValue.startsWith("Idle")){
-          Serial.print(" Running Idle...");
-          Serial.print("\n");
-         taskState = serialChangeTask(taskState,4);
-         }
-         
-       }
+       
  
  
 }else{                //If the subsystem is not serial based
@@ -448,33 +455,45 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
    case 1:
    cycleSpeed = 2;
    moveDownOnly(0,actualNumberOfLeds,500,5,CRGB(CHSV(random8(245),255,random8(245))),true);
-   //CRGB(CHSV(random8(245),255,random8(245)))
+   //CRGB(CHSV(random8(245),255,random8(245)))  //MISC TEST
    break;
  
  
    case 2:
    cycleSpeed = 2;
    moveUpOnly(0,actualNumberOfLeds,500,5,CRGB::Green,true);
+   //MISC TEST
    break;
    
    case 3:
-   //Cycle speed is set in the function.
-   moveDownOnly(0,actualNumberOfLeds,4,6,CRGB::White,true);
+  cycleSpeed = 1;
+  if(accuracy == 1){
+   moveDownOnly(0,actualNumberOfLeds,4,6,CRGB::Red,true);
+   }else{
+   moveDownOnly(0,actualNumberOfLeds,4,6,CRGB::Green,true);
+   }
    
-
-
    break;
    
    case 4:
    brighten(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),1,0,actualNumberOfLeds,2);
+   //IDLE PATTERN
    break;
    
    case 5:
-   setColorUp(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),0,actualNumberOfLeds);
+   setColorUp(CRGB::Red,0,actualNumberOfLeds);
+   //SHOOTER FIRE PATTERN
+   break;
+   
+   case 6:
+   sparkle(CRGB(tempRand(random8(255),1),tempRand(random8(255),2),tempRand(random8(255),0)), 500, true);
+   //FINISH PATTERN. SPARKLE BIT.
+   break;
    
    default:
    cycleSpeed = 1;
    moveDownOnly(0,actualNumberOfLeds,1,5,CRGB::Blue,true);
+   //JUST CHILLING PATTERN
    break;
    //sparkle(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),500,true);
    //moveDownOnly(0,actualNumberOfLeds,1,5,CRGB(0,0,random16(150)),true);
@@ -485,8 +504,19 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
    switch(taskState){
      
     case 4:
-     //sparkle(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),500,true); 
+     sparkle(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),500,true); 
+      //Idle pattern sparkles
    break; 
+   
+    case 5:
+     brighten(CRGB::Red,1,0,actualNumberOfLeds,1);
+     //FIRE UP FADE PORTION FOR PRETTIENESS
+     break;
+     
+     case 6:
+     brighten(CRGB::Black,1,0,actualNumberOfLeds,1);
+   //FINISH PATTERN. FADING PORTION
+     break;
      
     default:
     cycleSpeed =1;
@@ -1131,10 +1161,10 @@ void Synchronizer::resetTimers(){
   ////
 
 
+//SIDES WILL PROBABLY BE UNSERIALED.
 Subsystem lightSystemSide(NUM_LEDS_SIDES,1,2,8,true,true);      //Serial Based
 Subsystem syncSystemSide(NUM_LEDS_SIDES,1,3,8,true,true);      //Secondary Serial
-Subsystem lightSystemUnderGlow(NUM_LEDS_UNDERGLOW,1,3,8,false,false);
-
+Subsystem poleSystem(NUM_LEDS_POLES,1,2,8,true, false);
 
 Synchronizer lightSetSide(NUM_LEDS_SIDES);
 
@@ -1154,10 +1184,11 @@ Synchronizer lightSetSide(NUM_LEDS_SIDES);
 
 void setup(){
 pinMode(DATA_PIN_SIDES,OUTPUT);
-pinMode(DATA_PIN_UNDERGLOW, OUTPUT);
+//pinMode(DATA_PIN_UNDERGLOW, OUTPUT);
 
   FastLED.addLeds<WS2812B, DATA_PIN_SIDES, GRB>(lightSetSide.leds, NUM_LEDS_SIDES);
-  FastLED.addLeds<WS2812B, DATA_PIN_UNDERGLOW, RGB>(lightSystemUnderGlow.leds, NUM_LEDS_UNDERGLOW);
+  //FastLED.addLeds<WS2812B, DATA_PIN_UNDERGLOW, RGB>(lightSystemUnderGlow.leds, NUM_LEDS_UNDERGLOW);
+  FastLED.addLeds<WS2812B, DATA_PIN_POLES, GRB>(poleSystem.leds, NUM_LEDS_POLES);
  Serial.begin(57600);
  Serial.setTimeout(40);
  
@@ -1223,10 +1254,12 @@ lightSystem2.setColor(CRGB::Black);  //Yey....this should be part of ^^
 void loop(){
   
    if(Serial.available() >0){ 
-        serialValue = Serial.readString(); 
+        serialValue = Serial.readString();     //Serial removed from system.runSystem for multi-serial systems
       Serial.print(" Recieved: ");
       Serial.print(serialValue);  
    }
+   
+     poleSystem.runSystem(1,false);
    
     lightSystemSide.runSystem(1,false);
     lightSetSide.runSystem(lightSystemSide.leds,false);
@@ -1235,16 +1268,16 @@ void loop(){
     lightSetSide.runSystem(syncSystemSide.leds,false);
     lightSetSide.runSystem(lightSystemSide.leds,true);
     
-    lightSystemUnderGlow.runSystem(1,false);
+   // lightSystemUnderGlow.runSystem(1,false);
       
 
      
    FastLED.show();
  
   
-  if(lightSystemSide.getTaskState() > 0 or syncSystemSide.getTaskState() > 0 or lightSystemUnderGlow.getTaskState() > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
+  if(lightSystemSide.getTaskState() > 0 or syncSystemSide.getTaskState() > 0){   //Only delay if we have lights to show. No reason to delay if there is nothing there.
    
-     delay((lightSystemSide.getDelay() + syncSystemSide.getDelay() + lightSystemUnderGlow.getDelay())/2); //Delay extra if running an override as most overrides shouldn't update fast.
+     delay((lightSystemSide.getDelay() + syncSystemSide.getDelay())/2); //Delay extra if running an override as most overrides shouldn't update fast.
     
 }
 
