@@ -121,8 +121,8 @@ class Subsystem  //Class that allows for multitasking lights. Made to be flexibl
   void setColorDown(CRGB color, int low, int high);//Sets the light strip to one color going down from the top . Occurs over several system.runs's
   void moveUp(int moveTimes, int color); // Moves every LED bulb color up one.
   void moveDown(int moveTimes, int color); //Moves every LED bulb color down one.
-  void moveUpOnly(int low, int high, int runTimes, CRGB color, bool rain); //Moves up the LED bulb colors from a range up.
-  void moveDownOnly(int low, int high,int runTimes, CRGB color, bool rain); //Moves up the LED bulb colors from a ranage down.
+  void moveUpOnly(int low, int high, int runTimes, int cycleSpeed, CRGB color, bool rain); //Moves up the LED bulb colors from a range up.
+  void moveDownOnly(int low, int high,int runTimes, int cycleSpeed, CRGB color, bool rain); //Moves up the LED bulb colors from a ranage down.
   void alternateColor(CRGB color1, CRGB color2);// Makes the lights alternate between two colors
   void rippleCRGB(CRGB color, int rippleRate, int positionStart, int duration);//Makes the LEDs ripple from one LED to all others while also lowering each RGB value from one LED to the next.
   void rippleCHSV(CHSV color, int rippleRate, int positionStart, int duration, int HSV);//Makes the LEDs ripple from one LED to all others while also lowering each HSV of choice value from one LED to the next. (0=Hue, 1=Saturation, 2=value)
@@ -336,7 +336,6 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
         
       
        if(serialValue.startsWith("Aim")){
-         if(taskState != 5){
           Serial.print(" Running Aim...");
           Serial.print(runTimer);
           Serial.print("\n");
@@ -346,7 +345,6 @@ void Subsystem::updateTask(){        //This function only runs when a task is co
            accuracy =  serialValue.substring(6).toInt();
           }
           test = true;
-         }
          }
          /*if(serialValue.startsWith("Idle")){
           Serial.print(" Running Idle...");
@@ -441,10 +439,10 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
   
    case 3:
   cycleSpeed = 6;
-  if(accuracy == 0){
+  if(accuracy <= 1){
    setColor(CRGB::White);
     }else{
-   moveDownOnly(0,actualNumberOfLeds,4,CRGB(255/accuracy,255/accuracy,255/accuracy),true);
+   moveDownOnly(0,actualNumberOfLeds,4,6,CRGB(255/accuracy,255/accuracy,255/accuracy),true);
    }
    //Aim Assist Lights
    
@@ -453,125 +451,89 @@ void Subsystem::runSystem(int runTimes, bool autoDelay){    //Basic function use
   
    
    case 5:
-   cycleSpeed = 5;
    setColorUp(CRGB::Red,0,actualNumberOfLeds);
    //SHOOTER FIRE PATTERN
    break;
    
    case 6:
-   cycleSpeed = 1;
-   sparkle(CRGB(CHSV(random8(245),255,random8(245))), 2500, true);
+   sparkle(CRGB(random8(255),random8(255),random8(255)), 2500, true);
    //FINISH PATTERN. SPARKLE BIT.
    break;
    
    default:
-   cycleSpeed = 4;
-   rippleCRGB(CRGB::Yellow,20,tempRand(random8(actualNumberOfLeds),1), 8);//Makes the LEDs ripple from one LED to all others while also lowering each RGB value from one LED to the next.
+   cycleSpeed = 1;
+   rippleCRGB(CRGB(160,0,50),20,tempRand(random8(actualNumberOfLeds),1), 8);//Makes the LEDs ripple from one LED to all others while also lowering each RGB value from one LED to the next.
    //JUST CHILLING PATTERN
    break;
    //sparkle(CRGB(tempRand(random8(255),0),tempRand(random8(255),1),tempRand(random8(255),2)),500,true);
    //moveDownOnly(0,actualNumberOfLeds,1,5,CRGB(0,0,random16(150)),true);
 
+   break; 
   }
   }else{
    switch(taskState){
      
     case 3:
     cycleSpeed = 4;
-    if(accuracy == 0){
+    if(accuracy <= 1){
       setColor(CRGB::Black);
     }else{
-         moveDownOnly(0,actualNumberOfLeds,4,CRGB(255/accuracy,255/accuracy,255/accuracy),true);
+         moveDownOnly(0,actualNumberOfLeds,4,6,CRGB(255/accuracy,255/accuracy,255/accuracy),true);
     }
     //Aim assist. Brightens as accuracy increases.
    break; 
    
     case 5:
-    cycleSpeed = 1;
-     brighten(CRGB(25,25,25),1,0,actualNumberOfLeds,1);
-     //FIRE UP FADE PORTION FOR PRETTIENESS. Simulates Idle due to inability to finish brighteness pattern properly.
+     brighten(CRGB(255,150,150),1,0,actualNumberOfLeds,1);
+     //FIRE UP FADE PORTION FOR PRETTIENESS
      break;
      
      case 6:
-     cycleSpeed = 1;
      brighten(CRGB::Black,1,0,actualNumberOfLeds,1);
    //FINISH PATTERN. FADING PORTION
      break;
      
     default:
     cycleSpeed = 1;
-    brighten(CRGB(25,25,25),1,0,actualNumberOfLeds,1);
-    //Just chill fading bit.
+    brighten(CRGB(0,25,120),1,0,actualNumberOfLeds,1);
   break;
    } 
   }
   }else{
     if(_serialLessUpdateChooser ==1){    //Update choosing point for non-serial functions
    switch(taskState){
+      case 0:
 
+break;
        
-     case 1:
-     cycleSpeed = 1;
-     sparkle(CRGB::Green,750,true);    //Matrix Fade
+     case 1:    
       break;
       
       case 2:
-      cycleSpeed = 1;
-      brighten(CRGB(10,10,10),1,0,actualNumberOfLeds,2); //Sync Fade
+      
 break;
     
     case 3:
-      cycleSpeed = 1;
-        rippleCHSV(CHSV(tempRand(random8(255),1),255,tempRand(random8(255),1)),30, 24, 10, 0);//Makes the LEDs ripple from one LED to all others while also lowering each HSV of choice value from one LED to the next. (0=Hue, 1=Saturation, 2=value)
 
+
+    
+      
     break;
     
     case 4:
-      cycleSpeed = 1;
-        brighten(CRGB(20,20,20),1,0,actualNumberOfLeds,2);        //Sync bit
+              
+
+          
+                              //Sync 1
+
+    
     
     break;
     
     case 5:
-      cycleSpeed = 5;
-      setColorUp(CRGB::Blue,0,actualNumberOfLeds);                //blue red cross
-      
+    
     break;
-    
-    case 6:
-      cycleSpeed = 1;
-    brighten(CRGB::Black,1,0,actualNumberOfLeds,2);                  //fade sync
-    
-      break;
-      
-      case 7:
-      cycleSpeed = 3;
-         moveDownOnly(0,actualNumberOfLeds,500,CRGB(CHSV(random8(245),255,random8(245))),true);
-
-      break;
-      
-      case 8:
-          cycleSpeed = 1;
-          brighten(CRGB(15,15,15),1,0,actualNumberOfLeds,2);
-      break;
-      
-      
-      
-      case 9:
-            cycleSpeed = 5;
-      sparkle(CRGB::Blue,1000,true);
-      sparkle(CRGB::Red,1000,true);
-      break;
    
-    
-    case 10:
-    cycleSpeed = 1;
-    brighten(CRGB(30,30,30),1,0,actualNumberOfLeds,2);
-    break;
-    
-    case 11:
-    done = true;
-      completelyDone = true;
     
     default:
     done = true;
@@ -580,52 +542,53 @@ break;
     } 
     if(_serialLessUpdateChooser==2){  //second set of commands to run in the event you want two serialess subsystems
       switch(taskState){
+    
+    case 0:
+    done = true;
+    break;
      
     case 1:
     cycleSpeed =1;
-    brighten(CRGB(10,10,10),1,0,actualNumberOfLeds,2);
+    
     
 
     break;
      
     case 2:
-    brighten(CRGB(20,20,20),1,0,actualNumberOfLeds,2);
+
 
 
     break;
     
     case 3:
-    cycleSpeed = 5;
-    setColorDown(CRGB::Red, 0, actualNumberOfLeds);    //Blue and Red cross
      
 
     break;
     
     case 4:
-    cycleSpeed = 1;
-    brighten(CRGB::Black,1,0,actualNumberOfLeds,2);    //Fade to black
+        
+
 
     
     break;
     
     case 5:
-    brighten(CRGB(15,15,15),1,0,actualNumberOfLeds,2);    //Fade for rainbow sparkles
+
 
    
     break;
     
     case 6:  
-   brighten(CRGB(30,30,30),1,0,actualNumberOfLeds,2);    //Fade for blue and red sparkle
+ 
      
     break;
     
     case 7:
-    completelyDone = true;
-    done = true;
+    
     break;
     
     case 8:
-    
+
     
     break;
     
@@ -819,7 +782,7 @@ void Subsystem::moveUp(int moveTimes, int color){
   }*/
   
   
-  void Subsystem::moveUpOnly(int low, int high, int runTimes, CRGB color, bool rain){
+  void Subsystem::moveUpOnly(int low, int high, int runTimes, int cycleSpeed, CRGB color, bool rain){
     if(runTimes > runTimer){
     for(timer = high; timer>low; timer--){
       
@@ -844,7 +807,7 @@ void Subsystem::moveUp(int moveTimes, int color){
     }
   }
   
-  void Subsystem::moveDownOnly(int low, int high, int runTimes, CRGB color, bool rain){
+  void Subsystem::moveDownOnly(int low, int high, int runTimes, int cycleSpeed, CRGB color, bool rain){
     if(runTimes > runTimer){
     for(timer = low; timer<high; timer++){
       
@@ -1173,8 +1136,8 @@ void Synchronizer::resetTimers(){
   ////
 
 
-Subsystem lightSystemSide(NUM_LEDS_SIDES,1,1,8,false,true);      //Serial Based, amount, serial update chooser, not serial update,delay, serial, synced
-Subsystem syncSystemSide(NUM_LEDS_SIDES,2,2,8,false,true);      //Secondary Serial
+Subsystem lightSystemSide(NUM_LEDS_SIDES,1,2,8,true,true);      //Serial Based, amount, serial update chooser, not serial update,delay, serial, synced
+Subsystem syncSystemSide(NUM_LEDS_SIDES,2,3,8,true,true);      //Secondary Serial
 
 Synchronizer lightSetSide(NUM_LEDS_SIDES);
 
