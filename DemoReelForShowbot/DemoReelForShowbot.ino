@@ -17,6 +17,7 @@ FASTLED_USING_NAMESPACE
 
 #define DATA_PIN1    4
 #define DATA_PIN2    5
+#define INPUT_PIN    9
 //#define CLK_PIN   4
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
@@ -27,11 +28,13 @@ CRGB ledsRight[NUM_LEDS_PER_STRIP];
 
 boolean dimming = false;
 char rxChar = '1';
-char preChar = 0;
+char preChar = '1';
 int colorNum = 0;
 int gHue = 0;
 int BRIGHTNESS = 96;
 int FRAMES_PER_SECOND = 120;
+
+//typedef enum Commands { HELP, RED, GREEN, BLUE, RGBFLASH, SINE, BREATHSTATIC, DIM, BRIGHTEN, RAINFLASH, SINGLECOLCHANGE, AMERICAFLASH, PAUSE };
 
 CRGB color[] = {CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Grey, CRGB::White, CRGB::HotPink, CRGB::LemonChiffon, CRGB::DarkKhaki, CRGB::LightSteelBlue};
 
@@ -39,8 +42,9 @@ CRGB colorAmerica[] = {CRGB::Red, CRGB::White,CRGB::Blue};
 
 void setup() {
   delay(3000); // 3 second delay for recovery
-  Serial.begin(9600);
-  Serial.flush();
+  //pinMode(INPUT_PIN, INPUT);
+  Serial.begin(57600);
+  Serial.setTimeout(40);
   printHelp();
   
   
@@ -68,36 +72,36 @@ void loop()
     rxChar = preChar;
     break;
     
-    case '1':
+    case '1':                 //Set the lights to red
     allAsOne(CRGB::Red);
     break;
 
-    case '2':
+    case '2':                 //Set the lights to Green
     allAsOne(CRGB::Green);
     break;
     
-    case '3':
+    case '3':                 //Set the lights to Blue
     allAsOne(CRGB::Blue);
     break;
 
-    case '4':
+    case '4':                 //Flash RGB
     rgbFlash();
     break;
 
-    case '5':
+    case '5':                 //Use sine for moving lights
     sine();
     break;
 
-    case '6':
+    case '6':                 //BreathFunction
     breathStatic();
     break;
 
-    case '7':
+    case '7':                 //Dim the lights
     dim();
     rxChar = preChar;
     break;
 
-    case '8':
+    case '8':                 //Brighten the lights
     brighten();
     rxChar = preChar;
     break;
@@ -106,21 +110,21 @@ void loop()
     rainFlash();
     break;
     
-    case 'a':
+    case 'a':                 //Set to a single color change through list of colors
     singleColorChange();
     rxChar = 'p';
     break;
 
-    case 'A':
+    case 'A':                 //Flash Red, White, and Blue
     americaFlash();
     break;
     
-    case 'D':
+    case 'D':                 //Activate Death (Do not use if you have epilepsy(?))
     FRAMES_PER_SECOND = 500;
     death();
     break;
 
-    case 'p':
+    case 'p':                 //Pause the lights
     pauseLights();
     break;
     
