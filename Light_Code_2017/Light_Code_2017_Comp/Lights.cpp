@@ -2,7 +2,7 @@
 #include "Lights.h"
 #include "FastLED.h"
 
-CRGB color[] = {CRGB::Red, CRGB::Green, CRGB::Blue};
+CRGB color[] = {CRGB::Red, CRGB::Blue, CRGB::White};
 CRGB colorAmerica[] = {CRGB::Red, CRGB::White, CRGB::Blue};
 
 int colorNum = 0;
@@ -10,6 +10,7 @@ int gHue = 0;
 int _brightness;
 int FRAMES_PER_SECOND = 120;
 boolean dimming = false;
+uint8_t gCurrentPatternNumber = 0;
 
 Lights::Lights(int numLeds, int brightness){
   leds = new CRGB[numLeds];
@@ -23,7 +24,7 @@ void Lights::help(){
     Serial.println("1 -> Make LEDS Red");
     Serial.println("2 -> Make LEDS Green");
     Serial.println("3 -> Make LEDS Blue");
-    Serial.println("4 -> Make it flash RGB");
+    Serial.println("4 -> Make it turn to a set color");
     Serial.println("5 -> Make it go to a Sine");
     Serial.println("6 -> Make it Breath rainbow");
     Serial.println("7 -> Dim");
@@ -31,7 +32,10 @@ void Lights::help(){
     Serial.println("9 -> Make it flash rainbow");
     Serial.println("a -> Make it cycle one color(Currently Unusable)");
     Serial.println("A -> Make it flash American");
-    Serial.println("D -> Make DEATH!!!");
+    Serial.println("D -> Make DEATH!!!  Currently commented out for safety");
+    Serial.println("F -> Make it show firing signal");
+    Serial.println("R -> Make it show ready to fire signal");
+    Serial.println("S -> Make cycle between main commands");
 }
 
 
@@ -39,8 +43,8 @@ void Lights::allAsOne(CRGB color){
   for(int i = 0; i<_numLeds; i++){
     leds[i] = color;
   }
-  FastLED.show();
-  FastLED.delay(1000 / FRAMES_PER_SECOND);
+  //FastLED.show();
+  //FastLED.delay(1000 / FRAMES_PER_SECOND);
 }
 
 void Lights::allRed(){
@@ -64,6 +68,7 @@ void Lights::allGreen(){
     leds[i] = CRGB::Green;
   }
 }
+
 
 
 
@@ -91,8 +96,55 @@ void Lights::brighten(){
 
 
 
-void Lights::cycleColors(){
+void Lights::cycleColors(){ //Not currently supported
   
+}
+
+
+
+void Lights::cycleCommandsMain(){
+  EVERY_N_SECONDS( 5 ) { 
+    gCurrentPatternNumber = (gCurrentPatternNumber + 1) % 7;  //cycles throught the switch statement, do % (numberInArray + 1)
+  }
+  switch(gCurrentPatternNumber){
+    case 0:
+    allRed();
+    break;
+
+    case 1:
+    allGreen();
+    break;
+
+    case 2:
+    allBlue();
+    break;
+
+    case 3:
+    breathRainbow();
+    break;
+
+    case 4:
+    breathRainbow();
+    break;
+
+    case 5:
+    flashRainbow();
+    _brightness = 254;
+    break;
+
+    case 6:
+    sineWave();
+    break;
+
+    case 7:
+    break;
+
+    case 8:
+    break;
+
+    case 9:
+    break;
+  }
 }
 
 
@@ -123,11 +175,11 @@ void Lights::dim(){
 
 
 
-void Lights::flashRGB(){
+/*void Lights::flashRGB(){
   allAsOne(color[colorNum%3]);
     colorNum++;
     FastLED.delay(10000 / FRAMES_PER_SECOND);
-}
+}*/
 
 
 
@@ -138,10 +190,23 @@ void Lights::flashRainbow(){
 }
 
 
+
 void Lights::flashAmerican(){
   allAsOne(colorAmerica[colorNum%3]);
   colorNum++;
   FastLED.delay(10000 / FRAMES_PER_SECOND);
+}
+
+
+
+void Lights::firingMain(){
+  
+}
+
+
+
+void Lights::fireReadyMain(){
+  
 }
 
 
@@ -162,4 +227,8 @@ void Lights::sineWave(){
   FastLED.show();
   FastLED.delay(1000 / FRAMES_PER_SECOND);
 }
+
+
+
+
 
