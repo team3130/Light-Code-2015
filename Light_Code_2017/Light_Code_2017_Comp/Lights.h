@@ -37,6 +37,7 @@ class Lights
     void firingMain();    //Makes the leds show firing signal (Main lights)
     void fireReadyMain();  //Makes the leds ready to fire signal (Main lights)
     void pause();         //Makes the leds pause
+    void toggle();
     void sineWave();      //Makes the leds move in a sin wave while switching colors through HSV values
     
 };

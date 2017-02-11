@@ -32,7 +32,7 @@ void Lights::help(){
     Serial.println("9 -> Make it flash rainbow");
     Serial.println("a -> Make it cycle one color(Currently Unusable)");
     Serial.println("A -> Make it flash American");
-    Serial.println("D -> Make DEATH!!!  Currently commented out for safety");
+    Serial.println("D -> Toggle on and off");
     Serial.println("F -> Make it show firing signal");
     Serial.println("R -> Make it show ready to fire signal");
     Serial.println("S -> Make cycle between main commands");
@@ -217,6 +217,18 @@ void Lights::pause(){
 
 
 
+void Lights::toggle(){
+  if(_brightness<=3){
+    _brightness = 100;
+    FastLED.setBrightness(100);
+  }else{
+    _brightness = 0;  
+    FastLED.setBrightness(0);
+  }
+}
+
+
+
 void Lights::sineWave(){
   fadeToBlackBy( leds, _numLeds, 20);
   int pos1 = beatsin16(10,0,_numLeds/2);
@@ -224,8 +236,8 @@ void Lights::sineWave(){
   leds[pos1] += CHSV( gHue, 255, 192);
   leds[pos2] += CHSV( gHue, 255, 192);
   gHue++;
-  FastLED.show();
-  FastLED.delay(1000 / FRAMES_PER_SECOND);
+  //FastLED.show();
+  //FastLED.delay(1000 / FRAMES_PER_SECOND);
 }
 
 

@@ -5,12 +5,12 @@ FASTLED_USING_NAMESPACE
 #error "Requires FastLED 3.1 or later; check github for latest code."
 #endif
 
-#define DATA_PIN1    4
-#define DATA_PIN2    8
+#define DATA_PIN1    8
+#define DATA_PIN2    4
 #define INPUT_PIN    9
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
-#define NUM_LEDS1    64
+#define NUM_LEDS1    254
 #define NUM_LEDS2    64
 
 char rxChar = '1';
@@ -18,7 +18,7 @@ char preChar = '1';
 
 
 Lights *lights1 = new Lights(NUM_LEDS1, 100);
-//Lights *lights2 = new Lights(NUM_LEDS1, 100);
+Lights *lights2 = new Lights(NUM_LEDS2, 100);
 void setup() {
   delay(3000); 
   Serial.begin(9600);
@@ -26,7 +26,7 @@ void setup() {
   lights1->help();
 
     FastLED.addLeds<LED_TYPE, DATA_PIN1, COLOR_ORDER>(lights1->leds, NUM_LEDS1).setCorrection(TypicalLEDStrip);
-    //FastLED.addLeds<LED_TYPE, DATA_PIN2, COLOR_ORDER>(lights2->leds, NUM_LEDS2).setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<LED_TYPE, DATA_PIN2, COLOR_ORDER>(lights2->leds, NUM_LEDS2).setCorrection(TypicalLEDStrip);
 
 }
 
@@ -47,12 +47,12 @@ void loop() {
     
     case '1':                 //Set the lights to red
     lights1->allRed(); 
-    //lights2->allRed();
+    lights2->allRed();
     break;
 
     case '2':                 //Set the lights to Green
     lights1->allGreen();
-    //lights2->allGreen();
+    lights2->allGreen();
     break;
     
     case '3':                 //Set the lights to Blue
@@ -65,7 +65,7 @@ void loop() {
     
     case '5':                 //Use sine for moving lights
     lights1->sineWave();
-    //lights2->sineWave();
+    lights2->sineWave();
     break;
 
     case '6':                 //BreathFunction
@@ -94,9 +94,10 @@ void loop() {
     lights1->flashAmerican();
     break;
     
-    //case 'D':                 //Activate Death (Do not use if you have epilepsy(?))
-    //lights1->DEATH();
-    //break;
+    case 'D':                 //Activate Death (Do not use if you have epilepsy(?))
+    lights1->toggle();
+    rxChar = preChar;
+    break;
 
     case 'p':                 //Pause the lights
     lights1->pause();
