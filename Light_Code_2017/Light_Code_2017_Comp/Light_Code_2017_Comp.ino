@@ -5,20 +5,21 @@ FASTLED_USING_NAMESPACE
 #error "Requires FastLED 3.1 or later; check github for latest code."
 #endif
 
-#define DATA_PIN1    8
-#define DATA_PIN2    4
+#define DATA_PIN1    4                                                                                                                                             
+#define DATA_PIN2    8
 #define INPUT_PIN    9
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
-#define NUM_LEDS1    254
+#define NUM_LEDS1    64
 #define NUM_LEDS2    64
 
+int FPS = 120;
 char rxChar = '1';
 char preChar = '1';
 
 
-Lights *lights1 = new Lights(NUM_LEDS1, 100);
-Lights *lights2 = new Lights(NUM_LEDS2, 100);
+Lights *lights1 = new Lights(NUM_LEDS1, 254);
+Lights *lights2 = new Lights(NUM_LEDS2, 254);
 void setup() {
   delay(3000); 
   Serial.begin(9600);
@@ -123,13 +124,12 @@ void loop() {
   }
       preChar = rxChar;
 
-      FastLED.delay(1000 / lights1->FRAMES_PER_SECOND);
+      FastLED.delay(1000 / FPS);
       // send the 'leds' array out to the actual LED strip
       FastLED.show();
       //Serial.println("Time Test");
-      if(lights1->FRAMES_PER_SECOND > 120){
-          lights1->FRAMES_PER_SECOND = 120; 
+      if(FPS != 120){
+        FPS = 120;
       }
-
 }
 }

@@ -104,7 +104,7 @@ void Lights::cycleColors(){ //Not currently supported
 
 void Lights::cycleCommandsMain(){
   EVERY_N_SECONDS( 5 ) { 
-    gCurrentPatternNumber = (gCurrentPatternNumber + 1) % 7;  //cycles throught the switch statement, do % (numberInArray + 1)
+    gCurrentPatternNumber = (gCurrentPatternNumber + 1) % 6;  //cycles throught the switch statement, do % (numberInArray + 1)
   }
   switch(gCurrentPatternNumber){
     case 0:
@@ -124,7 +124,7 @@ void Lights::cycleCommandsMain(){
     break;
 
     case 4:
-    breathRainbow();
+    sineWave();
     break;
 
     case 5:
@@ -133,7 +133,6 @@ void Lights::cycleCommandsMain(){
     break;
 
     case 6:
-    sineWave();
     break;
 
     case 7:
@@ -185,8 +184,7 @@ void Lights::dim(){
 
 void Lights::flashRainbow(){
   allAsOne(CHSV(gHue, 255, _brightness));
-  gHue += 15;
-  FastLED.delay(4000 / FRAMES_PER_SECOND);
+  gHue += 1;  
 }
 
 
@@ -194,7 +192,6 @@ void Lights::flashRainbow(){
 void Lights::flashAmerican(){
   allAsOne(colorAmerica[colorNum%3]);
   colorNum++;
-  FastLED.delay(10000 / FRAMES_PER_SECOND);
 }
 
 
@@ -236,8 +233,6 @@ void Lights::sineWave(){
   leds[pos1] += CHSV( gHue, 255, 192);
   leds[pos2] += CHSV( gHue, 255, 192);
   gHue++;
-  //FastLED.show();
-  //FastLED.delay(1000 / FRAMES_PER_SECOND);
 }
 
 
