@@ -14,15 +14,15 @@ FASTLED_USING_NAMESPACE
 #define NUM_LEDS2    64
 
 int FPS = 120;
-char rxChar = '1';
-char preChar = '1';
+char rxChar = 'S';
+char preChar = 'S';
 
 
 Lights *lights1 = new Lights(NUM_LEDS1, 254);
 Lights *lights2 = new Lights(NUM_LEDS2, 254);
 void setup() {
   delay(3000); 
-  Serial.begin(9600);
+  Serial.begin(57600);
   Serial.setTimeout(40);
   lights1->help();
 
@@ -58,10 +58,12 @@ void loop() {
     
     case '3':                 //Set the lights to Blue
     lights1->allAsOne(CRGB::Blue);
+    lights2->allAsOne(CRGB::Blue);
     break;
 
     case '4':       
-    lights1->allAsOne(CRGB::Indigo);      
+    lights1->allAsOne(CRGB::Indigo);
+    lights2->allAsOne(CRGB::Indigo);      
     break;
     
     case '5':                 //Use sine for moving lights
@@ -71,20 +73,24 @@ void loop() {
 
     case '6':                 //BreathFunction
     lights1->breathRainbow();
+    lights2->breathRainbow();
     break;
 
     case '7':                 //Dim the lights
     lights1->dim();
+    lights2->dim();
     rxChar = preChar;
     break;
 
     case '8':                 //Brighten the lights
     lights1->brighten();
+    lights2->brighten();
     rxChar = preChar;
     break;
 
     case '9':
     lights1->flashRainbow();
+    lights2->flashRainbow();
     break;
     
     case 'a':                 //Set to a single color change through list of colors
@@ -93,15 +99,18 @@ void loop() {
 
     case 'A':                 //Flash Red, White, and Blue
     lights1->flashAmerican();
+    lights2->flashAmerican();
     break;
     
     case 'D':                 //Activate Death (Do not use if you have epilepsy(?))
     lights1->toggle();
+    lights2->toggle();
     rxChar = preChar;
     break;
 
     case 'p':                 //Pause the lights
     lights1->pause();
+    lights2->pause();
     break;
 
     case 'F':                 //Firing lights
@@ -114,6 +123,7 @@ void loop() {
 
     case 'S':                 //Sample through all the commands
     lights1->cycleCommandsMain();
+    lights2->cycleCommandsMain();
     break;
     
     default:                     
