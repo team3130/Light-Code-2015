@@ -2,11 +2,9 @@
 #include "Lights.h"
 #include "FastLED.h"
 
-CRGB color[] = {CRGB::Red, CRGB::Blue, CRGB::White};
-CRGB colorAmerica[] = {CRGB::Red, CRGB::White, CRGB::Blue};
-
 int colorNum = 0;
 int gHue = 0;
+int currLED = 0;
 int _brightness;
 int FRAMES_PER_SECOND = 120;
 boolean dimming = false;
@@ -30,8 +28,10 @@ void Lights::help(){
     Serial.println("7 -> Dim");
     Serial.println("8 -> Brighten");
     Serial.println("9 -> Make it flash rainbow");
-    Serial.println("a -> Make it cycle one color(Currently Unusable)");
-    Serial.println("A -> Make it flash American");
+    Serial.println("q -> randHSVSpin");
+    Serial.println("r -> randHSVChase");
+    Serial.println("s -> spinningRainbow");
+    Serial.println("C -> Chaser");
     Serial.println("D -> Toggle on and off");
     Serial.println("F -> Make it show firing signal");
     Serial.println("R -> Make it show ready to fire signal");
@@ -96,8 +96,11 @@ void Lights::brighten(){
 
 
 
-void Lights::cycleColors(){ //Not currently supported
-  
+void Lights::chaser(CRGB color){
+  fadeToBlackBy( leds, _numLeds, 20);
+  leds[currLED%_numLeds] = color;
+  FastLED.setBrightness(255);
+  currLED++;
 }
 
 
@@ -189,13 +192,6 @@ void Lights::flashRainbow(){
 
 
 
-void Lights::flashAmerican(){
-  allAsOne(colorAmerica[colorNum%3]);
-  colorNum++;
-}
-
-
-
 void Lights::firingMain(){
   
 }
@@ -226,6 +222,23 @@ void Lights::toggle(){
 
 
 
+void Lights::randomHSVChase(){
+  fadeToBlackBy( leds, _numLeds, 20);
+  leds[currLED%_numLeds] = CHSV( random8(), 255, 192 );
+  currLED++;
+}
+
+
+
+void Lights::randomHSVSpin(){
+   for(int i = _numLeds - 1; i >= 0; i--){
+    leds[i] = leds[i-1];
+  }
+  leds[0] = CHSV( random8(), 255, 192 );
+}
+
+
+
 void Lights::sineWave(){
   fadeToBlackBy( leds, _numLeds, 20);
   int pos1 = beatsin16(10,0,_numLeds/2);
@@ -233,6 +246,15 @@ void Lights::sineWave(){
   leds[pos1] += CHSV( gHue, 255, 192);
   leds[pos2] += CHSV( gHue, 255, 192);
   gHue++;
+}
+
+
+
+void Lights::spinningRainbow(){
+  for(int i = _numLeds - 1; i >= 0; i--){
+    leds[i] = leds[i-1];
+  }
+  leds[0] = CHSV( gHue++, 255, 192 );
 }
 
 

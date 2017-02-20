@@ -92,14 +92,25 @@ void loop() {
     lights1->flashRainbow();
     lights2->flashRainbow();
     break;
-    
-    case 'a':                 //Set to a single color change through list of colors
-    //lights1->
+
+    case 'q':
+    lights1->randomHSVSpin();
+    lights2->randomHSVSpin();
     break;
 
-    case 'A':                 //Flash Red, White, and Blue
-    lights1->flashAmerican();
-    lights2->flashAmerican();
+    case 'r':
+    lights1->randomHSVChase();
+    lights2->randomHSVChase();
+    break;
+
+    case 's': //spinningRainbow
+    lights1->spinningRainbow();
+    lights2->spinningRainbow();
+    break;
+
+    case 'C': //Chaser
+    lights1->chaser(CRGB::Red);
+    lights2->chaser(CRGB::Red);
     break;
     
     case 'D':                 //Activate Death (Do not use if you have epilepsy(?))
@@ -125,6 +136,7 @@ void loop() {
     lights1->cycleCommandsMain();
     lights2->cycleCommandsMain();
     break;
+
     
     default:                     
       Serial.print("'");
