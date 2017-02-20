@@ -4,7 +4,8 @@
 
 int colorNum = 0;
 int gHue = 0;
-int currLED = 0;
+int currLED = 1;
+int counter = 0;
 int _brightness;
 int FRAMES_PER_SECOND = 120;
 boolean dimming = false;
@@ -31,6 +32,7 @@ void Lights::help(){
     Serial.println("q -> randHSVSpin");
     Serial.println("r -> randHSVChase");
     Serial.println("s -> spinningRainbow");
+    Serial.println("t -> spinningRainbowComplete");    
     Serial.println("C -> Chaser");
     Serial.println("D -> Toggle on and off");
     Serial.println("F -> Make it show firing signal");
@@ -77,7 +79,7 @@ void Lights::breathRainbow(){
     if(dimming){
       dim();
       if(_brightness<15){dimming = false;}
-    } else if(!dimming){
+    } else{
       brighten();
       if(_brightness>240){dimming = true;}
     }
@@ -97,10 +99,12 @@ void Lights::brighten(){
 
 
 void Lights::chaser(CRGB color){
-  fadeToBlackBy( leds, _numLeds, 20);
-  leds[currLED%_numLeds] = color;
+  fadeToBlackBy( leds, _numLeds, 40);
+  leds[(int)(currLED/2.0)] = color;
   FastLED.setBrightness(255);
   currLED++;
+  if(currLED>=_numLeds*2){currLED=0;}
+  FastLED.delay(50);
 }
 
 
@@ -177,14 +181,6 @@ void Lights::dim(){
 
 
 
-/*void Lights::flashRGB(){
-  allAsOne(color[colorNum%3]);
-    colorNum++;
-    FastLED.delay(10000 / FRAMES_PER_SECOND);
-}*/
-
-
-
 void Lights::flashRainbow(){
   allAsOne(CHSV(gHue, 255, _brightness));
   gHue += 1;  
@@ -223,9 +219,12 @@ void Lights::toggle(){
 
 
 void Lights::randomHSVChase(){
-  fadeToBlackBy( leds, _numLeds, 20);
-  leds[currLED%_numLeds] = CHSV( random8(), 255, 192 );
+fadeToBlackBy( leds, _numLeds, 40);
+  leds[(int)(currLED/2.0)] = CHSV( random8(), 255, 192);
+  FastLED.setBrightness(255);
   currLED++;
+  if(currLED>=_numLeds*2){currLED=0;}
+  FastLED.delay(50);
 }
 
 
@@ -235,6 +234,7 @@ void Lights::randomHSVSpin(){
     leds[i] = leds[i-1];
   }
   leds[0] = CHSV( random8(), 255, 192 );
+  FastLED.delay(20);
 }
 
 
@@ -255,6 +255,16 @@ void Lights::spinningRainbow(){
     leds[i] = leds[i-1];
   }
   leds[0] = CHSV( gHue++, 255, 192 );
+}
+
+
+
+void Lights::spinningRainbowComplete(){
+  for(int i = _numLeds - 1; i >= 0; i--){
+    leds[i] = leds[i-1];
+  }
+  leds[0] = CHSV( gHue, 255, 192 );
+  gHue = gHue + (255 / _numLeds);
 }
 
 

@@ -44,6 +44,7 @@ class Lights
     void randomHSVSpin();  //Do random HSV spinner
     void sineWave();      //Makes the leds move in a sin wave while switching colors through HSV values
     void spinningRainbow(); //Do spinning rainbow
+    void spinningRainbowComplete(); //Do spinning rainbow but show whole rainbow
     
 };
 

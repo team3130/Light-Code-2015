@@ -14,8 +14,8 @@ FASTLED_USING_NAMESPACE
 #define NUM_LEDS2    64
 
 int FPS = 120;
-char rxChar = 'S';
-char preChar = 'S';
+char rxChar = '5';
+char preChar = '5';
 
 
 Lights *lights1 = new Lights(NUM_LEDS1, 254);
@@ -106,6 +106,11 @@ void loop() {
     case 's': //spinningRainbow
     lights1->spinningRainbow();
     lights2->spinningRainbow();
+    break;
+
+    case 't': //spinningRainbowComplete
+    lights1->spinningRainbowComplete();
+    lights2->spinningRainbowComplete();
     break;
 
     case 'C': //Chaser
